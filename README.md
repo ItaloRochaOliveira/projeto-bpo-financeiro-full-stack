@@ -1,8 +1,6 @@
+# 🏦 Sistema Financeiro BPO Full Stack
 
-
-# 🏦 Gerador de Boletos Bancários
-
-Uma aplicação web completa para geração e gerenciamento de boletos bancários, desenvolvida com **Next.js 14+**, **TypeScript**, **Tailwind CSS** e **Node.js/Express**.
+Uma aplicação web completa para gestão financeira empresarial, desenvolvida com **Next.js 14+**, **TypeScript**, **Tailwind CSS** e **Spring Boot Java**.
 
 ## ✨ Funcionalidades
 
@@ -11,6 +9,7 @@ Uma aplicação web completa para geração e gerenciamento de boletos bancário
 - ✅ Tokens JWT com armazenamento seguro
 - ✅ Middleware de proteção de rotas
 - ✅ Logout com limpeza de localStorage
+- ✅ Sistema de roles (admin/user)
 
 ### 📄 Gerenciamento de Boletos
 - ✅ Criação de boletos com dados completos
@@ -19,11 +18,19 @@ Uma aplicação web completa para geração e gerenciamento de boletos bancário
 - ✅ Design padrão brasileiro com marca d'água
 - ✅ Validação de dados com Zod
 
+### 💰 Sistema Financeiro
+- ✅ **Preços**: Gestão de preços de equipamentos com depreciação
+- ✅ **Faturamento**: Controle de faturamento e médias de aluguel
+- ✅ **Custos**: Registro de custos por tipo (Material, Serviço, etc.)
+- ✅ **Soft Delete**: Proteção de dados com exclusão lógica
+- ✅ **Hard Delete**: Exclusão permanente apenas para admins
+
 ### 🎨 Design
 - ✅ Interface moderna e responsiva
 - ✅ Paleta de cores institucional (azul médico)
 - ✅ Componentes shadcn/ui
 - ✅ Feedback visual de erros e sucessos
+- ✅ Dashboard intuitivo
 
 ## 🛠️ Stack Tecnológica
 
@@ -38,36 +45,43 @@ Uma aplicação web completa para geração e gerenciamento de boletos bancário
 - **Lucide React** para ícones
 
 ### Backend
-- **Node.js** com **Express**
+- **Spring Boot 3+** com Java 17+
 - **TypeScript** para tipagem
-- **PostgreSQL** com **TypeORM**
+- **PostgreSQL** com **JPA/Hibernate**
 - **JWT** para autenticação
-- **jsPDF** para geração de PDFs
-- **Zod** para validação
+- **Lombok** para boilerplate reduction
+- **Spring Security** para proteção
+- **GlobalExceptionHandler** para tratamento centralizado de erros
 
 ### Infraestrutura
 - **Docker** com multi-stage builds
 - **Docker Compose** para orquestração
 - **pnpm** para gerenciamento de pacotes
 
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 projeto-trabalho/
-├── backend/                    # API Node.js/Express
+├── backend/                    # API Spring Boot
 │   ├── src/
-│   │   ├── controller/         # Controladores de API
-│   │   ├── service/            # Lógica de negócio
-│   │   ├── repository/         # Camada de dados
-│   │   ├── middleware/         # Middlewares
-│   │   ├── utils/              # Utilitários (PDF, etc)
-│   │   └── db/                # Configuração DB
+│   │   ├── main/
+│   │   │   ├── java/com/italo/geradorboleto/
+│   │   │   │   ├── controller/         # Controladores REST
+│   │   │   │   ├── service/            # Lógica de negócio
+│   │   │   │   ├── repository/         # Camada de dados
+│   │   │   │   ├── dto/               # Data Transfer Objects
+│   │   │   │   ├── model/             # Entidades JPA
+│   │   │   │   ├── exception/         # Tratamento de erros
+│   │   │   │   └── config/            # Configurações
+│   │   │   └── resources/
+│   │   │       └── init.sql            # Schema inicial
 │   ├── Dockerfile
-│   └── package.json
+│   └── pom.xml
 ├── frontend/                   # Aplicação Next.js
 │   ├── app/                    # App Router
 │   │   ├── auth/              # Páginas de autenticação
 │   │   ├── pdf/               # Gestão de boletos
+│   │   ├── dashboard/          # Dashboard financeiro
 │   │   └── api/               # API Routes
 │   ├── components/              # Componentes React
 │   │   ├── ui/                 # shadcn/ui
@@ -83,9 +97,11 @@ projeto-trabalho/
 └── README.md                   # Este arquivo
 ```
 
-## 🚀 Como Executar
+## Como Executar
 
 ### Pré-requisitos
+- **Java 17+**
+- **Maven 3.6+**
 - **Node.js 18+**
 - **pnpm** (recomendado) ou npm
 - **Docker** e **Docker Compose**
@@ -94,7 +110,7 @@ projeto-trabalho/
 
 1. **Clonar o repositório**
 ```bash
-git clone <repositorio>
+git clone <repositório>
 cd projeto-trabalho
 ```
 
@@ -102,7 +118,7 @@ cd projeto-trabalho
 ```bash
 # Backend
 cd backend
-pnpm install
+mvn clean install
 
 # Frontend
 cd frontend
@@ -115,14 +131,14 @@ pnpm install
 cp backend/.env.example backend/.env
 
 # Frontend - configurar variáveis
-echo "NEXT_PUBLIC_API_URL=http://localhost:3006" > frontend/.env.local
+echo "NEXT_PUBLIC_API_URL=http://localhost:8080" > frontend/.env.local
 ```
 
 4. **Executar aplicação**
 ```bash
 # Backend (terminal 1)
 cd backend
-pnpm run dev
+mvn spring-boot:run
 
 # Frontend (terminal 2)
 cd frontend
@@ -133,17 +149,17 @@ pnpm run dev
 
 1. **Subir todos os serviços**
 ```bash
-docker build -t back_end_gerador_pdf:1.0.0 ./ && docker compose up -d && docker compose up --build frontend
+docker-compose up -d --build
 ```
 
 2. **Acessar aplicações**
 - Frontend: http://localhost:3000
-- Backend: http://localhost:3006
+- Backend: http://localhost:8080
 - Database: localhost:5432
 
-## 📊 Funcionalidades Detalhadas
+## Funcionalidades Detalhadas
 
-### 🔐 Fluxo de Autenticação
+### Fluxo de Autenticação
 1. **Signup**: Usuário cria conta com email e senha
 2. **Login**: Autenticação com token JWT
 3. **Middleware**: Proteção automática de rotas
@@ -193,41 +209,94 @@ NEXT_PUBLIC_API_URL=http://localhost:3006
 ## 📱 Endpoints da API
 
 ### Autenticação
-- `POST /auth/signup` - Criar usuário
-- `POST /auth/login` - Fazer login
+- `POST /api/auth/signup` - Criar usuário
+- `POST /api/auth/login` - Fazer login
 
 ### Boletos
-- `GET /boleto` - Listar boletos do usuário
-- `POST /boleto/create` - Criar novo boleto
-- `GET /boleto/:id` - Obter boleto específico
-- `GET /boleto/:id/pdf` - Gerar PDF do boleto
+- `GET /api/boleto` - Listar boletos do usuário
+- `POST /api/boleto/create` - Criar novo boleto
+- `GET /api/boleto/:id` - Obter boleto específico
+- `GET /api/boleto/:id/pdf` - Gerar PDF do boleto
+
+### Preços
+- `GET /api/precos` - Listar preços
+- `POST /api/precos` - Criar preço
+- `GET /api/precos/:id` - Obter preço específico
+- `PUT /api/precos/:id` - Atualizar preço
+- `DELETE /api/precos/:id` - Soft delete
+- `DELETE /api/precos/:id/hard` - Hard delete (admin)
+- `GET /api/precos/deleted` - Listar deletados
+
+### Faturamento
+- `GET /api/faturamento` - Listar faturamentos
+- `POST /api/faturamento` - Criar faturamento
+- `GET /api/faturamento/:id` - Obter faturamento específico
+- `PUT /api/faturamento/:id` - Atualizar faturamento
+- `DELETE /api/faturamento/:id` - Soft delete
+- `DELETE /api/faturamento/:id/hard` - Hard delete (admin)
+- `GET /api/faturamento/deleted` - Listar deletados
+
+### Custos
+- `GET /api/custos` - Listar custos
+- `POST /api/custos` - Criar custo
+- `GET /api/custos/:id` - Obter custo específico
+- `GET /api/custos/tipo/:tipoCusto` - Listar por tipo
+- `PUT /api/custos/:id` - Atualizar custo
+- `DELETE /api/custos/:id` - Soft delete
+- `DELETE /api/custos/:id/hard` - Hard delete (admin)
+- `GET /api/custos/deleted` - Listar deletados
 
 ## 🎯 Exemplos de Uso
 
-### Criar Boleto
-```typescript
-const boletoData = {
-  nomeEmpresa: "Empresa Exemplo LTDA",
-  cpfCnpj: "12.345.678/0001-23",
-  endereco: "Rua das Flores, 123 - São Paulo, SP",
-  descricaoReferencia: "Pagamento de serviços",
-  valor: 150.00,
-  vencimento: "2024-12-31"
-};
+### Criar Preço
+```json
+{
+  "equipamento": "Computador i5",
+  "investimento": 5000.00,
+  "residual": 500.00,
+  "depreciacaoMeses": 24,
+  "precoAtualMensal": 180.50,
+  "margem": 15.50,
+  "manutencaoAtual": 50.00,
+  "faturamentoId": "ft001"
+}
 ```
 
-### Resposta da API
+### Criar Faturamento
+```json
+{
+  "equipamento": "Computador i5",
+  "totalEquipamento": 1500.00,
+  "mediaAlugados": 250.00
+}
+```
+
+### Criar Custo
+```json
+{
+  "descricao": "Aluguel de escritório",
+  "valor": 1500.00,
+  "tipoCusto": "Aluguel"
+}
+```
+
+### Resposta da API - Preço
 ```json
 {
   "id": "uuid-generated",
-  "nomeEmpresa": "Empresa Exemplo LTDA",
-  "cpfCnpj": "12.345.678/0001-23",
-  "endereco": "Rua das Flores, 123 - São Paulo, SP",
-  "descricaoReferencia": "Pagamento de serviços",
-  "valor": 150.00,
-  "vencimento": "2024-12-31",
+  "equipamento": "Computador i5",
+  "investimento": 5000.00,
+  "residual": 500.00,
+  "depreciacaoMeses": 24,
+  "precoAtualMensal": 180.50,
+  "margem": 15.50,
+  "manutencaoAtual": 50.00,
+  "faturamentoId": "ft001",
   "createdAt": "2024-01-01T00:00:00.000Z",
-  "updatedAt": "2024-01-01T00:00:00.000Z"
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "deleted": false,
+  "deletedAt": null,
+  "userId": "uuid-user"
 }
 ```
 
@@ -236,10 +305,14 @@ const boletoData = {
 ### Implementações
 - ✅ **Tokens JWT** com expiração configurável
 - ✅ **Middleware** de proteção de rotas
-- ✅ **Validação de entrada** com Zod schemas
+- ✅ **Validação de entrada** com Bean Validation
 - ✅ **Hash de senhas** com bcrypt
 - ✅ **CORS** configurado para frontend
-- ✅ **Marca d'água** nos PDFs gerados
+- ✅ **Soft Delete** para proteção de dados
+- ✅ **Role-based access** para operações críticas
+- ✅ **GlobalExceptionHandler** para tratamento centralizado de erros
+- ✅ **DTOs** para validação de entrada
+- ✅ **Soft Delete** para preservação de dados
 
 ### Boas Práticas
 - ✅ **Tipagem forte** com TypeScript
