@@ -1,6 +1,11 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/page": "app/page.js",
   "/auth/page": "app/auth/page.js",
-  "/pdf/page": "app/pdf/page.js"
+  "/boleto/[id]/pdf/page": "app/boleto/[id]/pdf/page.js",
+  "/pdf/page": "app/pdf/page.js",
+  "/page": "app/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/custos/page": "app/dashboard/custos/page.js",
+  "/dashboard/precos/page": "app/dashboard/precos/page.js",
+  "/dashboard/faturamento/page": "app/dashboard/faturamento/page.js"
 }

@@ -52,12 +52,16 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Cores baseadas no site Zscan
-        'medical-blue': '#0066cc',
-        'medical-dark': '#1a365d',
-        'medical-light': '#e6f3ff',
-        'medical-green': '#00a86b',
-        'medical-gray': '#6b7280',
+        // Cores baseadas no design de contabilidade moderno
+        'account-primary': '#043a49',
+        'account-secondary': '#004343',
+        'account-accent': '#064e59',
+        'account-light': '#f0fdfa',
+        'account-muted': '#64748b',
+        'account-success': '#059669',
+        'account-warning': '#d97706',
+        'account-danger': '#dc2626',
+        'account-info': '#0ea5e9',
       },
       borderRadius: {
         lg: "var(--radius)",

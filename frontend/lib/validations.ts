@@ -25,6 +25,10 @@ export const signupSchema = z.object({
     .string()
     .min(1, 'Senha é obrigatória')
     .min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  role: z
+    .string()
+    .min(1, 'Tipo de usuário é obrigatório')
+    .default('USER'),
 })
 
 export const boletoSchema = z.object({

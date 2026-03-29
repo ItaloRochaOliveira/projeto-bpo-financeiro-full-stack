@@ -6,8 +6,8 @@ import { Toaster } from '@/components/ui/toaster'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'PDF Generator Medical',
-  description: 'Sistema de geração de PDFs para documentos médicos',
+  title: 'Sistema Financeiro',
+  description: 'Sistema de gestão financeira com custos, faturamento e preços',
 }
 
 export default function RootLayout({

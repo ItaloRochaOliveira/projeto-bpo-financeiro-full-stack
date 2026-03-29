@@ -9,7 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/hooks/use-auth'
 import { loginSchema, signupSchema, LoginFormData, SignupFormData } from '@/lib/validations'
-import { UserPlus, LogIn } from 'lucide-react'
+import { UserPlus, LogIn, User } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface AuthFormProps {
   isLogin: boolean
@@ -26,7 +27,7 @@ export function AuthForm({ isLogin, onToggle }: AuthFormProps) {
     defaultValues: {
       email: '',
       password: '',
-      ...(isLogin ? {} : { name: '' }),
+      ...(isLogin ? {} : { name: '', role: 'USER' }),
     },
     mode: 'onChange',
   })
@@ -36,7 +37,7 @@ export function AuthForm({ isLogin, onToggle }: AuthFormProps) {
     form.reset({
       email: '',
       password: '',
-      ...(isLogin ? {} : { name: '' }),
+      ...(isLogin ? {} : { name: '', role: 'USER' }),
     })
   }, [isLogin, form])
 
@@ -56,113 +57,131 @@ export function AuthForm({ isLogin, onToggle }: AuthFormProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          {isLogin ? (
-            <>
-              <LogIn className="w-5 h-5" />
-              Entrar
-            </>
-          ) : (
-            <>
-              <UserPlus className="w-5 h-5" />
-              Criar Conta
-            </>
-          )}
-        </CardTitle>
-        <CardDescription>
+    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+      <div className="mb-6">
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          {isLogin ? 'Acessar conta' : 'Criar conta'}
+        </h3>
+        <p className="text-gray-600 text-sm">
           {isLogin
-            ? 'Faça login para acessar sua conta'
-            : 'Crie uma nova conta para começar'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {!isLogin && (
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome Completo</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Seu nome completo"
-                        {...field}
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            ? 'Preencha seus dados para fazer login'
+            : 'Preencha os dados para criar sua conta'}
+        </p>
+      </div>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          {!isLogin && (
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="account-label">Nome Completo</FormLabel>
+                  <FormControl>
+                    <Input
+                      className="account-input"
+                      placeholder="Seu nome completo"
+                      {...field}
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="account-label">E-mail</FormLabel>
+                <FormControl>
+                  <Input
+                    className="account-input"
+                    type="email"
+                    placeholder="seu@email.com"
+                    {...field}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
+          />
 
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="account-label">Senha</FormLabel>
+                <FormControl>
+                  <Input
+                    className="account-input"
+                    type="password"
+                    placeholder="••••••"
+                    {...field}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {!isLogin && (
             <FormField
               control={form.control}
-              name="email"
+              name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>E-mail</FormLabel>
+                  <FormLabel className="account-label">Tipo de Usuário</FormLabel>
                   <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="seu@email.com"
-                      {...field}
-                      disabled={isLoading}
-                    />
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+                      <SelectTrigger className="account-input">
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USER">Normal</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+          )}
 
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Senha</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      {...field}
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <Button type="submit" className="account-btn-primary w-full" disabled={isLoading}>
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                {isLogin ? 'Entrando...' : 'Criando conta...'}
+              </div>
+            ) : isLogin ? (
+              'Entrar'
+            ) : (
+              'Criar Conta'
+            )}
+          </Button>
+        </form>
+      </Form>
 
-            <Button type="submit" className="w-full variant-medical" disabled={isLoading}>
-              {isLoading ? (
-                'Processando...'
-              ) : isLogin ? (
-                'Entrar'
-              ) : (
-                'Criar Conta'
-              )}
-            </Button>
-          </form>
-        </Form>
-
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={onToggle}
-            className="text-medical-blue hover:text-blue-700 text-sm font-medium transition-colors"
-            disabled={isLoading}
-          >
-            {isLogin
-              ? 'Não tem uma conta? Crie uma agora'
-              : 'Já tem uma conta? Faça login'}
-          </button>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="mt-6 text-center">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="text-account-primary hover:text-account-accent text-sm font-medium transition-colors"
+          disabled={isLoading}
+        >
+          {isLogin
+            ? 'Não tem uma conta? Crie uma agora'
+            : 'Já tem uma conta? Faça login'}
+        </button>
+      </div>
+    </div>
   )
 }

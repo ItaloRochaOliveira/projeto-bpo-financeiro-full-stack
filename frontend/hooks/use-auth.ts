@@ -2,13 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { authAPI } from '@/lib/api'
 import { LoginFormData, SignupFormData } from '@/lib/validations'
 import { toast } from 'sonner'
+
+interface User {
+  email: string
+}
 
 interface UseAuthReturn {
   isAuthenticated: boolean
   isLoading: boolean
+  user: User | null
   login: (data: LoginFormData) => Promise<void>
   signup: (data: SignupFormData) => Promise<void>
   logout: () => void
@@ -17,6 +21,7 @@ interface UseAuthReturn {
 export function useAuth(): UseAuthReturn {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -24,34 +29,32 @@ export function useAuth(): UseAuthReturn {
   }, [])
 
   const checkAuth = () => {
-    const token = localStorage.getItem('token')
-    setIsAuthenticated(!!token)
+    const auth = localStorage.getItem('isAuthenticated')
+    const userData = localStorage.getItem('user')
+    
+    setIsAuthenticated(auth === 'true')
+    if (userData) {
+      setUser(JSON.parse(userData))
+    }
     setIsLoading(false)
   }
 
   const login = async (data: LoginFormData) => {
     try {
       setIsLoading(true)
-      const response = await authAPI.login(data)
-      console.log('Resposta login:', response)
-      localStorage.setItem('token', response.token)
-      setIsAuthenticated(true)
-      toast.success('Login realizado com sucesso!')
-      router.push('/')
+      // Simulação de login - substituir com API real
+      if (data.email && data.password) {
+        const userData = { email: data.email }
+        localStorage.setItem('isAuthenticated', 'true')
+        localStorage.setItem('user', JSON.stringify(userData))
+        setUser(userData)
+        setIsAuthenticated(true)
+        toast.success('Login realizado com sucesso!')
+        router.push('/dashboard')
+      }
     } catch (error: any) {
       console.error('Erro no login:', error)
-      
-      let message = 'Erro ao fazer login'
-      if (error.response?.data) {
-        const errorData = error.response.data
-        console.log('Error data:', errorData)
-        
-        if (errorData.message) {
-          message = errorData.message
-        }
-      }
-      
-      toast.error(message)
+      toast.error('Erro ao fazer login')
       throw error
     } finally {
       setIsLoading(false)
@@ -61,27 +64,19 @@ export function useAuth(): UseAuthReturn {
   const signup = async (data: SignupFormData) => {
     try {
       setIsLoading(true)
-      console.log('Enviando dados signup:', data)
-      const response = await authAPI.signup(data)
-      console.log('Resposta signup:', response)
-      localStorage.setItem('token', response.token)
-      setIsAuthenticated(true)
-      toast.success('Conta criada com sucesso!')
-      router.push('/')
+      // Simulação de signup - substituir com API real
+      if (data.email && data.password) {
+        const userData = { email: data.email }
+        localStorage.setItem('isAuthenticated', 'true')
+        localStorage.setItem('user', JSON.stringify(userData))
+        setUser(userData)
+        setIsAuthenticated(true)
+        toast.success('Conta criada com sucesso!')
+        router.push('/dashboard')
+      }
     } catch (error: any) {
       console.error('Erro no signup:', error)
-      
-      let message = 'Erro ao criar conta'
-      if (error.response?.data) {
-        const errorData = error.response.data
-        console.log('Error data:', errorData)
-        
-        if (errorData.message) {
-          message = errorData.message
-        }
-      }
-      
-      toast.error(message)
+      toast.error('Erro ao criar conta')
       throw error
     } finally {
       setIsLoading(false)
@@ -89,7 +84,9 @@ export function useAuth(): UseAuthReturn {
   }
 
   const logout = () => {
-    localStorage.removeItem('token')
+    localStorage.removeItem('isAuthenticated')
+    localStorage.removeItem('user')
+    setUser(null)
     setIsAuthenticated(false)
     toast.success('Logout realizado com sucesso!')
     router.push('/auth')
@@ -98,6 +95,7 @@ export function useAuth(): UseAuthReturn {
   return {
     isAuthenticated,
     isLoading,
+    user,
     login,
     signup,
     logout,
