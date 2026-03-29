@@ -1,13 +1,13 @@
 package com.italo.geradorboleto.service;
 
-import com.italo.geradorboleto.dto.CustoRequest;
-import com.italo.geradorboleto.dto.CustoResponse;
+import com.italo.geradorboleto.dto.*;
 import com.italo.geradorboleto.model.Custo;
 import com.italo.geradorboleto.repository.CustoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,17 +30,24 @@ public class CustoService {
         return convertToResponse(savedCusto);
     }
     
-    public List<CustoResponse> getAllCustos(String userId) {
-        return custoRepository.findByUserIdAndDeletedFalse(userId)
-            .stream()
-            .map(this::convertToResponse)
+    public CustosArrayResponse getAllCustos(String userId) {
+        List<Custo> todosCustos = custoRepository.findByUserIdAndDeletedFalse(userId);
+        
+        List<CustoCompletoResponse> custosCompletos = todosCustos.stream()
+            .map(custo -> convertToCompletoResponse(custo, todosCustos))
             .collect(Collectors.toList());
+        
+        CustosArrayResponse response = new CustosArrayResponse();
+        response.setData(custosCompletos);
+        return response;
     }
     
-    public CustoResponse getCustoById(String id, String userId) {
+    public CustoCompletoResponse getCustoById(String id, String userId) {
         Custo custo = custoRepository.findByIdAndDeletedFalse(id, userId)
             .orElseThrow(() -> new RuntimeException("Custo não encontrado"));
-        return convertToResponse(custo);
+        
+        List<Custo> todosCustos = custoRepository.findByUserIdAndDeletedFalse(userId);
+        return convertToCompletoResponse(custo, todosCustos);
     }
     
     public CustoResponse updateCusto(String id, CustoRequest request, String userId) {
@@ -104,6 +111,69 @@ public class CustoService {
         response.setDeleted(custo.getDeleted());
         response.setDeletedAt(custo.getDeletedAt());
         response.setUserId(custo.getUserId());
+        return response;
+    }
+    
+    private CustoCompletoResponse convertToCompletoResponse(Custo custo, List<Custo> todosCustos) {
+        CustoCompletoResponse response = new CustoCompletoResponse();
+        
+        // Calcular valores
+        BigDecimal valueCustoFixo = todosCustos.stream()
+            .filter(c -> "FIXO".equalsIgnoreCase(c.getTipoCusto()))
+            .map(Custo::getValor)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal valueCustoVariavel = todosCustos.stream()
+            .filter(c -> "VARIAVEL".equalsIgnoreCase(c.getTipoCusto()))
+            .map(Custo::getValor)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal soma = valueCustoFixo.add(valueCustoVariavel);
+        
+        // Calcular porcentagens
+        BigDecimal porcentagemValorFixo = soma.compareTo(BigDecimal.ZERO) > 0 
+            ? valueCustoFixo.divide(soma, 4, BigDecimal.ROUND_HALF_UP)
+            : BigDecimal.ZERO;
+        
+        BigDecimal porcentagemValorVariavel = soma.compareTo(BigDecimal.ZERO) > 0 
+            ? valueCustoVariavel.divide(soma, 4, BigDecimal.ROUND_HALF_UP)
+            : BigDecimal.ZERO;
+        
+        // Calcular porcentagem individual do custo
+        BigDecimal porcentagemIndividual = soma.compareTo(BigDecimal.ZERO) > 0 
+            ? custo.getValor().divide(soma, 4, BigDecimal.ROUND_HALF_UP)
+            : BigDecimal.ZERO;
+        
+        // Criar valueDB
+        CustoDetalheResponse valueDB = new CustoDetalheResponse();
+        valueDB.setId(custo.getId());
+        valueDB.setDescricao(custo.getDescricao());
+        valueDB.setValor(custo.getValor());
+        valueDB.setTipoCusto(custo.getTipoCusto());
+        valueDB.setPorcentagem(porcentagemIndividual);
+        
+        // Criar resumo
+        ResumoCompletoResponse resumo = new ResumoCompletoResponse();
+        
+        ResumoCustosResponse custosFixos = new ResumoCustosResponse();
+        custosFixos.setValue(valueCustoFixo);
+        custosFixos.setPorcentagem(porcentagemValorFixo);
+        
+        ResumoCustosResponse custosVariaveis = new ResumoCustosResponse();
+        custosVariaveis.setValue(valueCustoVariavel);
+        custosVariaveis.setPorcentagem(porcentagemValorVariavel);
+        
+        ResumoCustosResponse total = new ResumoCustosResponse();
+        total.setValue(soma);
+        total.setPorcentagem(porcentagemValorFixo.add(porcentagemValorVariavel));
+        
+        resumo.setCustosFixos(custosFixos);
+        resumo.setCustosVariaveis(custosVariaveis);
+        resumo.setTotal(total);
+        
+        response.setValueDB(valueDB);
+        response.setResumo(resumo);
+        
         return response;
     }
 }

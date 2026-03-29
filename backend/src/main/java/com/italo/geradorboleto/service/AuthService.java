@@ -60,7 +60,7 @@ public class AuthService {
         user.setName(signupRequest.getName());
         user.setEmail(signupRequest.getEmail());
         user.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
-        user.setRole("USER");
+        user.setRole(signupRequest.getRole() != null ? signupRequest.getRole() : "USER");
         user.setCreatedAt(LocalDateTime.now());
         user.setDeleted(false);
 

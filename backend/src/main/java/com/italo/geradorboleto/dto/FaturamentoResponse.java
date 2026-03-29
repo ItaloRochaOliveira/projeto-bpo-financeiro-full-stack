@@ -10,11 +10,6 @@ public class FaturamentoResponse {
     
     private String id;
     private String equipamento;
-    private BigDecimal totalEquipamento;
     private BigDecimal mediaAlugados;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private Boolean deleted;
-    private LocalDateTime deletedAt;
-    private String userId;
+    private BigDecimal porcentagem;
 }

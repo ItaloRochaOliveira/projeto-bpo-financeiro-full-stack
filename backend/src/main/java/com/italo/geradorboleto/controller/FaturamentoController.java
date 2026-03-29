@@ -32,6 +32,17 @@ public class FaturamentoController {
         }
     }
     
+    @GetMapping("/all")
+    public ResponseEntity<List<FaturamentoResponse>> getAllFaturamentosByUserId(
+            @RequestParam String userId) {
+        try {
+            List<FaturamentoResponse> faturamentos = faturamentoService.getAllFaturamentos(userId);
+            return ResponseEntity.ok(faturamentos);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+    
     @GetMapping
     public ResponseEntity<List<FaturamentoResponse>> getAllFaturamentos(
             @AuthenticationPrincipal UserDetails userDetails) {

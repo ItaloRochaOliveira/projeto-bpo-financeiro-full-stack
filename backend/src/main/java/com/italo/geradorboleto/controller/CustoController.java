@@ -1,7 +1,6 @@
 package com.italo.geradorboleto.controller;
 
-import com.italo.geradorboleto.dto.CustoRequest;
-import com.italo.geradorboleto.dto.CustoResponse;
+import com.italo.geradorboleto.dto.*;
 import com.italo.geradorboleto.service.CustoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,12 +31,23 @@ public class CustoController {
         }
     }
     
+    @GetMapping("/all")
+    public ResponseEntity<CustosArrayResponse> getAllCustosByUserId(
+            @RequestParam String userId) {
+        try {
+            CustosArrayResponse custos = custoService.getAllCustos(userId);
+            return ResponseEntity.ok(custos);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+    
     @GetMapping
-    public ResponseEntity<List<CustoResponse>> getAllCustos(
+    public ResponseEntity<CustosArrayResponse> getAllCustos(
             @AuthenticationPrincipal UserDetails userDetails) {
         try {
             String userId = getUserIdFromUserDetails(userDetails);
-            List<CustoResponse> custos = custoService.getAllCustos(userId);
+            CustosArrayResponse custos = custoService.getAllCustos(userId);
             return ResponseEntity.ok(custos);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(null);
@@ -45,12 +55,12 @@ public class CustoController {
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<CustoResponse> getCustoById(
+    public ResponseEntity<CustoCompletoResponse> getCustoById(
             @PathVariable String id,
             @AuthenticationPrincipal UserDetails userDetails) {
         try {
             String userId = getUserIdFromUserDetails(userDetails);
-            CustoResponse response = custoService.getCustoById(id, userId);
+            CustoCompletoResponse response = custoService.getCustoById(id, userId);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(null);

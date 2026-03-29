@@ -32,6 +32,17 @@ public class PrecoController {
         }
     }
     
+    @GetMapping("/all")
+    public ResponseEntity<List<PrecoResponse>> getAllPrecosByUserId(
+            @RequestParam String userId) {
+        try {
+            List<PrecoResponse> precos = precoService.getAllPrecos(userId);
+            return ResponseEntity.ok(precos);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+    
     @GetMapping
     public ResponseEntity<List<PrecoResponse>> getAllPrecos(
             @AuthenticationPrincipal UserDetails userDetails) {

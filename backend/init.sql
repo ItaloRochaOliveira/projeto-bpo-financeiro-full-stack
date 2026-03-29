@@ -26,6 +26,19 @@ CREATE TABLE IF NOT EXISTS boleto_data(
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS faturamento(
+    id VARCHAR(36) PRIMARY KEY,
+    equipamento VARCHAR(255) NOT NULL,
+    total_equipamento NUMERIC(10,2) NOT NULL,
+    media_alugados NUMERIC(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP,
+    user_id VARCHAR(36) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS precos(
     id VARCHAR(36) PRIMARY KEY,
     equipamento VARCHAR(255) NOT NULL,
@@ -42,19 +55,6 @@ CREATE TABLE IF NOT EXISTS precos(
     deleted_at TIMESTAMP,
     user_id VARCHAR(36) NOT NULL,
     FOREIGN KEY (faturamento_id) REFERENCES faturamento(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
-CREATE TABLE IF NOT EXISTS faturamento(
-    id VARCHAR(36) PRIMARY KEY,
-    equipamento VARCHAR(255) NOT NULL,
-    total_equipamento NUMERIC(10,2) NOT NULL,
-    media_alugados NUMERIC(10,2) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP,
-    deleted BOOLEAN DEFAULT FALSE,
-    deleted_at TIMESTAMP,
-    user_id VARCHAR(36) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 

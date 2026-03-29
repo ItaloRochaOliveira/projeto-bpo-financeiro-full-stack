@@ -10,8 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -120,13 +122,109 @@ public class PrecoService {
         response.setDepreciacaoMeses(preco.getDepreciacaoMeses());
         response.setPrecoAtualMensal(preco.getPrecoAtualMensal());
         response.setMargem(preco.getMargem());
-        response.setManutencaoAtual(preco.getManutencaoAtual());
-        response.setFaturamentoId(preco.getFaturamentoId());
-        response.setCreatedAt(preco.getCreatedAt());
-        response.setUpdatedAt(preco.getUpdatedAt());
-        response.setDeleted(preco.getDeleted());
-        response.setDeletedAt(preco.getDeletedAt());
-        response.setUserId(preco.getUserId());
+        response.setManutencaoAnual(preco.getManutencaoAtual());
+        
+        // Buscar dados do faturamento para este equipamento
+        Optional<Faturamento> faturamentoOpt = faturamentoRepository.findByUserIdAndDeletedFalse(preco.getUserId())
+            .stream()
+            .filter(f -> f.getEquipamento().equals(preco.getEquipamento()))
+            .findFirst();
+        
+        BigDecimal qtde = BigDecimal.ZERO;
+        BigDecimal taxaOcupacao = BigDecimal.ZERO;
+        BigDecimal mediaAlugados = BigDecimal.ZERO;
+        
+        if (faturamentoOpt.isPresent()) {
+            Faturamento faturamento = faturamentoOpt.get();
+            qtde = faturamento.getTotalEquipamento();
+            taxaOcupacao = faturamento.getTotalEquipamento().compareTo(BigDecimal.ZERO) > 0
+                ? faturamento.getMediaAlugados().divide(faturamento.getTotalEquipamento(), 4, BigDecimal.ROUND_HALF_UP)
+                : BigDecimal.ZERO;
+            mediaAlugados = faturamento.getMediaAlugados();
+        }
+        
+        response.setQtde(qtde);
+        response.setTaxaOcupacao(taxaOcupacao);
+        response.setMediaAlugados(mediaAlugados);
+        
+        // Buscar todos os preços para cálculos de rateio
+        List<Preco> todosPrecos = precoRepository.findByUserIdAndDeletedFalse(preco.getUserId());
+        
+        // Cálculo do rateio: ((investimento - residual) * média alugados) / SOMARPRODUTO(investimento - residual; média alugados)
+        BigDecimal investimentoMenosResidual = preco.getInvestimento().subtract(preco.getResidual());
+        BigDecimal numeradorRateio = investimentoMenosResidual.multiply(mediaAlugados);
+        
+        BigDecimal denominadorRateio = todosPrecos.stream()
+            .map(p -> {
+                Optional<Faturamento> fatOpt = faturamentoRepository.findByUserIdAndDeletedFalse(preco.getUserId())
+                    .stream()
+                    .filter(f -> f.getEquipamento().equals(p.getEquipamento()))
+                    .findFirst();
+                BigDecimal media = fatOpt.map(Faturamento::getMediaAlugados).orElse(BigDecimal.ZERO);
+                return p.getInvestimento().subtract(p.getResidual()).multiply(media);
+            })
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal rateio = denominadorRateio.compareTo(BigDecimal.ZERO) > 0
+            ? numeradorRateio.divide(denominadorRateio, 4, BigDecimal.ROUND_HALF_UP)
+            : BigDecimal.ZERO;
+        response.setRateio(rateio);
+        
+        // Custo rateado: Custos Fixos e Variáveis'!$D$7 * rateio (valor fixo simulado)
+        BigDecimal custosFixosVariaveisD7 = new BigDecimal("1000.00"); // Valor simulado da célula D7
+        BigDecimal custoRateado = custosFixosVariaveisD7.multiply(rateio);
+        response.setCustoRateado(custoRateado);
+        
+        // Manutenção mensal: manutenção anual / 12
+        BigDecimal manutencaoMensal = preco.getManutencaoAtual().divide(new BigDecimal("12"), 2, BigDecimal.ROUND_HALF_UP);
+        response.setManutencaoMensal(manutencaoMensal);
+        
+        // Custo: custo rateado / média alugados
+        BigDecimal custo = mediaAlugados.compareTo(BigDecimal.ZERO) > 0
+            ? custoRateado.divide(mediaAlugados, 2, BigDecimal.ROUND_HALF_UP)
+            : BigDecimal.ZERO;
+        response.setCusto(custo);
+        
+        // Depreciação: (investimento - residual) / depreciação meses
+        BigDecimal depreciacao = preco.getDepreciacaoMeses() > 0
+            ? investimentoMenosResidual.divide(new BigDecimal(preco.getDepreciacaoMeses()), 2, BigDecimal.ROUND_HALF_UP)
+            : BigDecimal.ZERO;
+        response.setDepreciacao(depreciacao);
+        
+        // Lucro: (investimento - residual) * margem
+        BigDecimal lucro = investimentoMenosResidual.multiply(preco.getMargem());
+        response.setLucro(lucro);
+        
+        // Ponto de equilíbrio: soma(manutenção mensal : lucro)
+        BigDecimal pontoEquilibrio = manutencaoMensal.add(lucro);
+        response.setPontoEquilibrio(pontoEquilibrio);
+        
+        // Preço adequado: soma(lucro : ponto de equilíbrio)
+        BigDecimal precoAdequado = lucro.add(pontoEquilibrio);
+        response.setPrecoAdequado(precoAdequado);
+        
+        // Preço atual - preço adequado
+        BigDecimal precoAtualMenosPrecoAdequado = preco.getPrecoAtualMensal().subtract(precoAdequado);
+        response.setPrecoAtualMenosPrecoAdequado(precoAtualMenosPrecoAdequado);
+        
+        // Faturamento estimado: preço adequado * média alugados
+        BigDecimal faturamentoEstimado = precoAdequado.multiply(mediaAlugados);
+        response.setFaturamentoEstimado(faturamentoEstimado);
+        
+        // Resultado: faturamento estimado - custo rateado
+        BigDecimal resultado = faturamentoEstimado.subtract(custoRateado);
+        response.setResultado(resultado);
+        
+        // Lucro total: lucro * média alugados
+        BigDecimal lucroTotal = lucro.multiply(mediaAlugados);
+        response.setLucroTotal(lucroTotal);
+        
+        // Payback meses: (investimento - residual) * qtde / resultado
+        BigDecimal paybackMeses = resultado.compareTo(BigDecimal.ZERO) > 0
+            ? investimentoMenosResidual.multiply(qtde).divide(resultado, 2, BigDecimal.ROUND_HALF_UP)
+            : BigDecimal.ZERO;
+        response.setPaybackMeses(paybackMeses);
+        
         return response;
     }
 }

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -90,13 +91,14 @@ public class FaturamentoService {
         FaturamentoResponse response = new FaturamentoResponse();
         response.setId(faturamento.getId());
         response.setEquipamento(faturamento.getEquipamento());
-        response.setTotalEquipamento(faturamento.getTotalEquipamento());
         response.setMediaAlugados(faturamento.getMediaAlugados());
-        response.setCreatedAt(faturamento.getCreatedAt());
-        response.setUpdatedAt(faturamento.getUpdatedAt());
-        response.setDeleted(faturamento.getDeleted());
-        response.setDeletedAt(faturamento.getDeletedAt());
-        response.setUserId(faturamento.getUserId());
+        
+        // Calcular porcentagem: média alugada / total equipamento
+        BigDecimal porcentagem = faturamento.getTotalEquipamento().compareTo(BigDecimal.ZERO) > 0
+            ? faturamento.getMediaAlugados().divide(faturamento.getTotalEquipamento(), 4, BigDecimal.ROUND_HALF_UP)
+            : BigDecimal.ZERO;
+        response.setPorcentagem(porcentagem);
+        
         return response;
     }
 }

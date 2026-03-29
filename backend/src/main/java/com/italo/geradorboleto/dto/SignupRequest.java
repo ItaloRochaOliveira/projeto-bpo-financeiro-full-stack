@@ -19,12 +19,16 @@ public class SignupRequest {
     @Size(min = 6, max = 100, message = "Senha deve ter entre 6 e 100 caracteres")
     private String password;
 
+    @NotBlank(message = "Tipo de usuário é obrigatório")
+    private String role;
+
     public SignupRequest() {}
 
-    public SignupRequest(String name, String email, String password) {
+    public SignupRequest(String name, String email, String password, String role) {
         this.name = name;
         this.email = email;
         this.password = password;
+        this.role = role;
     }
 
     public String getName() {
@@ -49,5 +53,13 @@ public class SignupRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

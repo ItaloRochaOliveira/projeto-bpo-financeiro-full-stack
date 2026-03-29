@@ -15,11 +15,21 @@ public class PrecoResponse {
     private Integer depreciacaoMeses;
     private BigDecimal precoAtualMensal;
     private BigDecimal margem;
-    private BigDecimal manutencaoAtual;
-    private String faturamentoId;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private Boolean deleted;
-    private LocalDateTime deletedAt;
-    private String userId;
+    private BigDecimal manutencaoAnual;
+    private BigDecimal qtde;
+    private BigDecimal taxaOcupacao;
+    private BigDecimal mediaAlugados;
+    private BigDecimal rateio;
+    private BigDecimal custoRateado;
+    private BigDecimal manutencaoMensal;
+    private BigDecimal custo;
+    private BigDecimal depreciacao;
+    private BigDecimal lucro;
+    private BigDecimal pontoEquilibrio;
+    private BigDecimal precoAdequado;
+    private BigDecimal precoAtualMenosPrecoAdequado;
+    private BigDecimal faturamentoEstimado;
+    private BigDecimal resultado;
+    private BigDecimal lucroTotal;
+    private BigDecimal paybackMeses;
 }
