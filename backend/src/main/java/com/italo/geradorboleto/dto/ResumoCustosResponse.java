@@ -8,5 +8,5 @@ import java.math.BigDecimal;
 public class ResumoCustosResponse {
     
     private BigDecimal value;
-    private BigDecimal porcentagem;
+    private Double porcentagem;
 }

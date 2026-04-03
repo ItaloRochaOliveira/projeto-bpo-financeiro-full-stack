@@ -7,5 +7,6 @@ import java.util.List;
 @Data
 public class CustosArrayResponse {
     
-    private List<CustoCompletoResponse> data;
+    private List<CustoSimplesResponse> data;
+    private ResumoCompletoResponse resumo;
 }

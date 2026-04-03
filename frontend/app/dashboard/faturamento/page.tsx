@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { apiReq } from '@/utils/ApiReq'
 
 interface Faturamento {
   id: string
@@ -54,13 +55,21 @@ export default function FaturamentoPage() {
 
   const loadFaturamentos = async () => {
     try {
-      // Buscar dados da API real
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-      const userId = user.email || 'user123'
-      const response = await fetch(`http://localhost:3006/api/faturamento/all?userId=${userId}`)
+      const token = localStorage.getItem('token')
+      if (!token) {
+        router.push('/auth')
+        return
+      }
       
-      if (response.ok) {
-        const data = await response.json()
+      const response = await apiReq(`http://localhost:3006/api/faturamento`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      
+      if (response && response.status === 200) {
+        const data = response.data
         setFaturamentos(data || [])
       } else {
         setFaturamentos([])
@@ -134,18 +143,34 @@ export default function FaturamentoPage() {
 
   const handleExport = async () => {
     try {
-      const userId = localStorage.getItem('userId') || 'user123'
-      const response = await fetch(`http://localhost:3006/api/export/excel?userId=${userId}`)
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `bpo_financeiro_${new Date().toISOString().split('T')[0]}.xlsx`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-      toast.success('Planilha completa exportada com sucesso!')
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('Token não encontrado')
+        return
+      }
+      
+      const response = await apiReq(`http://localhost:3006/api/export/excel`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      
+      // Criar blob e download
+      if(response && response.status === 200) {
+        const blob = new Blob([response.data], { 
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        })
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `bpo_financeiro_${new Date().toISOString().split('T')[0]}.xlsx`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        toast.success('Planilha completa exportada com sucesso!')
+      }
     } catch (error) {
       toast.error('Erro ao exportar planilha')
     }

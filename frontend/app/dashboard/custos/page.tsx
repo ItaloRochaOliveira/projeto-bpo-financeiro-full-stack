@@ -11,13 +11,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { apiReq } from '@/utils/ApiReq'
 
 interface Custo {
   id: string
   descricao: string
   valor: number
-  tipoCusto: 'FIXO' | 'VARIAVEL'
-  porcentagem: number
+  tipoCusto: string
+  porcentagem?: number
 }
 
 interface ResumoCustos {
@@ -46,10 +47,12 @@ export default function CustosPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingCusto, setEditingCusto] = useState<Custo | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [custoToDelete, setCustoToDelete] = useState<Custo | null>(null)
   const [formData, setFormData] = useState({
     descricao: '',
     valor: '',
-    tipoCusto: 'FIXO' as 'FIXO' | 'VARIAVEL'
+    tipoCusto: ''
   })
 
   useEffect(() => {
@@ -65,45 +68,66 @@ export default function CustosPage() {
 
   const loadCustos = async () => {
     try {
-      // Buscar dados da API real
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-      const userId = user.email || 'user123'
-      const response = await fetch(`http://localhost:3006/api/custos/all?userId=${userId}`)
+      const token = localStorage.getItem('token')
+      if (!token) {
+        router.push('/auth')
+        return
+      }
       
-      if (response.ok) {
-        const data = await response.json()
-        setCustos(data.data || [])
-        // Calcular resumo com base nos dados reais
-        const custosFixos = data.data?.filter((c: any) => c.tipoCusto === 'FIXO') || []
-        const custosVariaveis = data.data?.filter((c: any) => c.tipoCusto === 'VARIAVEL') || []
-        const totalFixos = custosFixos.reduce((sum: number, c: any) => sum + c.valor, 0)
-        const totalVariaveis = custosVariaveis.reduce((sum: number, c: any) => sum + c.valor, 0)
-        const total = totalFixos + totalVariaveis
+      const response = await apiReq(`http://localhost:3006/api/custos`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      if (response && response.status === 200) {
+        const data = response.data
+        const totalValue = data.resumo?.total?.value || 0
         
-        setResumo({
-          custosFixos: { value: totalFixos, porcentagem: total > 0 ? (totalFixos / total) * 100 : 0 },
-          custosVariaveis: { value: totalVariaveis, porcentagem: total > 0 ? (totalVariaveis / total) * 100 : 0 },
-          total: { value: total, porcentagem: 100 }
-        })
-      } else {
-        // Se falhar, tenta endpoint sem autenticação para desenvolvimento
-        const responseDev = await fetch(`http://localhost:3006/api/custos`)
-        if (responseDev.ok) {
-          const data = await responseDev.json()
-          setCustos(data.data || [])
+        // Adicionar porcentagem individual a cada custo
+        const custosComPorcentagem = (data.data || []).map((custo: any) => ({
+          ...custo,
+          porcentagem: totalValue > 0 ? (custo.valor / totalValue) * 100 : 0
+        }))
+        
+        setCustos(custosComPorcentagem)
+        
+        // Usar resumo vindo do backend
+        if (data.resumo) {
           setResumo({
-            custosFixos: { value: 0, porcentagem: 0 },
-            custosVariaveis: { value: 0, porcentagem: 0 },
-            total: { value: 0, porcentagem: 0 }
+            custosFixos: { 
+              value: data.resumo.custosFixos?.value || 0, 
+              porcentagem: (data.resumo.custosFixos?.porcentagem || 0) * 100 
+            },
+            custosVariaveis: { 
+              value: data.resumo.custosVariaveis?.value || 0, 
+              porcentagem: (data.resumo.custosVariaveis?.porcentagem || 0) * 100 
+            },
+            total: { 
+              value: data.resumo.total?.value || 0, 
+              porcentagem: (data.resumo.total?.porcentagem || 0) * 100 
+            }
           })
         } else {
-          setCustos([])
+          // Fallback caso não venha resumo
+          const totalFixos = data.data?.filter((c: any) => c.tipoCusto === 'FIXO').reduce((sum: number, c: any) => sum + (c.valor || 0), 0)
+          const totalVariaveis = data.data?.filter((c: any) => c.tipoCusto === 'VARIAVEL').reduce((sum: number, c: any) => sum + (c.valor || 0), 0)
+          const total = totalFixos + totalVariaveis
+          
           setResumo({
-            custosFixos: { value: 0, porcentagem: 0 },
-            custosVariaveis: { value: 0, porcentagem: 0 },
-            total: { value: 0, porcentagem: 0 }
+            custosFixos: { value: totalFixos, porcentagem: total > 0 ? (totalFixos / total) * 100 : 0 },
+            custosVariaveis: { value: totalVariaveis, porcentagem: total > 0 ? (totalVariaveis / total) * 100 : 0 },
+            total: { value: total, porcentagem: 100 }
           })
         }
+      } else {
+        setCustos([])
+        setResumo({
+          custosFixos: { value: 0, porcentagem: 0 },
+          custosVariaveis: { value: 0, porcentagem: 0 },
+          total: { value: 0, porcentagem: 0 }
+        })
       }
       setIsLoading(false)
     } catch (error) {
@@ -127,29 +151,61 @@ export default function CustosPage() {
     }
 
     try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('Token não encontrado')
+        return
+      }
+
       if (editingCusto) {
-        setCustos(prev => prev.map(custo => 
-          custo.id === editingCusto.id 
-            ? { ...custo, descricao: formData.descricao, valor: parseFloat(formData.valor), tipoCusto: formData.tipoCusto }
-            : custo
-        ))
-        toast.success('Custo atualizado com sucesso!')
-      } else {
-        const newCusto: Custo = {
-          id: Date.now().toString(),
-          descricao: formData.descricao,
-          valor: parseFloat(formData.valor),
-          tipoCusto: formData.tipoCusto,
-          porcentagem: 0
+        // Atualizar custo existente
+        const response = await apiReq(`http://localhost:3006/api/custos/${editingCusto.id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          data: {
+            descricao: formData.descricao,
+            valor: parseFloat(formData.valor),
+            tipoCusto: formData.tipoCusto
+          }
+        })
+
+        if (response && response.status === 200) {
+          toast.success('Custo atualizado com sucesso!')
+          loadCustos() // Recarregar dados
+        } else {
+          toast.error('Erro ao atualizar custo')
         }
-        setCustos(prev => [...prev, newCusto])
-        toast.success('Custo adicionado com sucesso!')
+      } else {
+        // Criar novo custo
+        const response = await apiReq(`http://localhost:3006/api/custos`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          data: {
+            descricao: formData.descricao,
+            valor: parseFloat(formData.valor),
+            tipoCusto: formData.tipoCusto
+          }
+        })
+
+        if (response && response.status === 200) {
+          toast.success('Custo adicionado com sucesso!')
+          loadCustos() // Recarregar dados
+        } else {
+          toast.error('Erro ao adicionar custo')
+        }
       }
       
       setDialogOpen(false)
       setEditingCusto(null)
       setFormData({ descricao: '', valor: '', tipoCusto: 'FIXO' })
     } catch (error) {
+      console.error('Erro ao salvar custo:', error)
       toast.error('Erro ao salvar custo')
     }
   }
@@ -164,12 +220,40 @@ export default function CustosPage() {
     setDialogOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (custo: Custo) => {
+    setCustoToDelete(custo)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!custoToDelete) return
+    
     try {
-      setCustos(prev => prev.filter(custo => custo.id !== id))
-      toast.success('Custo excluído com sucesso!')
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('Token não encontrado')
+        return
+      }
+
+      const response = await apiReq(`http://localhost:3006/api/custos/${custoToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response && response.status === 200) {
+        toast.success('Custo excluído com sucesso!')
+        loadCustos() // Recarregar dados
+      } else {
+        toast.error('Erro ao excluir custo')
+      }
     } catch (error) {
+      console.error('Erro ao excluir custo:', error)
       toast.error('Erro ao excluir custo')
+    } finally {
+      setDeleteDialogOpen(false)
+      setCustoToDelete(null)
     }
   }
 
@@ -263,7 +347,7 @@ export default function CustosPage() {
                   <Label className="account-label">Tipo de Custo</Label>
                   <Select 
                     value={formData.tipoCusto} 
-                    onValueChange={(value: 'FIXO' | 'VARIAVEL') => 
+                    onValueChange={(value: 'FIXO' | 'VARIÁVEL') => 
                       setFormData(prev => ({ ...prev, tipoCusto: value }))
                     }
                   >
@@ -272,7 +356,7 @@ export default function CustosPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="FIXO">Fixo</SelectItem>
-                      <SelectItem value="VARIAVEL">Variável</SelectItem>
+                      <SelectItem value="VARIÁVEL">Variável</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -389,7 +473,7 @@ export default function CustosPage() {
                         {custo.tipoCusto === 'FIXO' ? 'Fixo' : 'Variável'}
                       </span>
                     </TableCell>
-                    <TableCell>{custo.porcentagem.toFixed(1)}%</TableCell>
+                    <TableCell>{custo.porcentagem ? custo.porcentagem.toFixed(1) : '0.0'}%</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Button
@@ -402,7 +486,7 @@ export default function CustosPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(custo.id)}
+                          onClick={() => handleDelete(custo)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -415,6 +499,45 @@ export default function CustosPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="account-card border-0 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-gray-900">
+              Confirmar Exclusão
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              Tem certeza que deseja excluir o custo <strong>"{custoToDelete?.descricao}"</strong> no valor de 
+              <br />
+              <strong>R$ {custoToDelete?.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>?
+            </p>
+            <p className="text-red-600 text-sm font-medium">
+              ⚠️ Esta ação não pode ser desfeita.
+            </p>
+          </div>
+          <div className="flex gap-3 pt-4">
+            <Button 
+              variant="outline" 
+              className="account-btn-secondary flex-1"
+              onClick={() => {
+                setDeleteDialogOpen(false)
+                setCustoToDelete(null)
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              className="account-btn-primary bg-red-600 hover:bg-red-700 flex-1"
+              onClick={confirmDelete}
+            >
+              Excluir
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

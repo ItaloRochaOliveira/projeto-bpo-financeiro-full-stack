@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { LoginFormData, SignupFormData } from '@/lib/validations'
 import { toast } from 'sonner'
+import { apiReq } from '@/utils/ApiReq'
 
 interface User {
   email: string
@@ -42,19 +43,57 @@ export function useAuth(): UseAuthReturn {
   const login = async (data: LoginFormData) => {
     try {
       setIsLoading(true)
-      // Simulação de login - substituir com API real
-      if (data.email && data.password) {
-        const userData = { email: data.email }
+      
+      // Chamar API real de login
+      const response = await apiReq('http://localhost:3006/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        data: data,
+      })
+
+      if (response && response.data) {
+        const result = response.data
+        const token = result.token
+        
+        // Salvar token e dados do usuário
+        localStorage.setItem('token', token)
         localStorage.setItem('isAuthenticated', 'true')
-        localStorage.setItem('user', JSON.stringify(userData))
-        setUser(userData)
+        localStorage.setItem('user', JSON.stringify({ email: data.email }))
+        
+        setUser({ email: data.email })
         setIsAuthenticated(true)
         toast.success('Login realizado com sucesso!')
         router.push('/dashboard')
+      } else {
+        let errorMessage = 'Erro ao fazer login'
+        
+        // Verificar o content-type para saber como tratar a resposta
+        const contentType = response?.headers?.['content-type']
+        
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const errorData = response?.data
+            errorMessage = errorData?.message || errorMessage
+          } catch {
+            // Se falhar o parse JSON, mantém a mensagem padrão
+          }
+        } else {
+          try {
+            const errorText = response?.data
+            errorMessage = errorText || errorMessage
+          } catch {
+            // Se falhar ler texto, mantém a mensagem padrão
+          }
+        }
+        
+        toast.error(errorMessage)
+        throw new Error(errorMessage)
       }
     } catch (error: any) {
       console.error('Erro no login:', error)
-      toast.error('Erro ao fazer login')
+      toast.error(error.message || 'Erro ao fazer login')
       throw error
     } finally {
       setIsLoading(false)
@@ -86,6 +125,7 @@ export function useAuth(): UseAuthReturn {
   const logout = () => {
     localStorage.removeItem('isAuthenticated')
     localStorage.removeItem('user')
+    localStorage.removeItem('token')
     setUser(null)
     setIsAuthenticated(false)
     toast.success('Logout realizado com sucesso!')

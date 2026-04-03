@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class JwtTokenProvider {
@@ -36,12 +38,17 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String generateToken(String username) {
+    public String generateToken(String email, String userId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("email", email);
+        claims.put("userId", userId);
+
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(email)
+                .addClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
@@ -58,6 +65,16 @@ public class JwtTokenProvider {
         return claims.getSubject();
     }
 
+    public String getUserIdFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.get("userId", String.class);
+    }
+
     public boolean validateToken(String token) {
         try {
             System.out.println("=== Validating JWT Token ===");
@@ -70,6 +87,10 @@ public class JwtTokenProvider {
             
             System.out.println("JWT Token is valid");
             return true;
+        } catch (ExpiredJwtException ex) {
+            System.out.println("JWT Token validation failed: " + ex.getMessage());
+            // Propagar exceção de token expirado para o filter tratar
+            throw ex;
         } catch (JwtException | IllegalArgumentException ex) {
             System.out.println("JWT Token validation failed: " + ex.getMessage());
             return false;

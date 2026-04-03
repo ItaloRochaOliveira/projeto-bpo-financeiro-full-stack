@@ -4,6 +4,13 @@ const nextConfig = {
   images: {
     domains: ['localhost'],
   },
+  logging: {
+    fetches: {
+      fullUrl: true,
+    },
+    // Esta é a opção que você precisa:
+    browserToTerminal: true, 
+  }
 }
 
 module.exports = nextConfig

@@ -79,25 +79,32 @@ VALUES
 
 INSERT INTO boleto_data (id, nome_empresa, cpf_cnpj, endereco, descricao_referencia, valor, vencimento, user_id)
 VALUES
-('43cbe748-32f5-48fe-86d1-a8a591f28b35','Empresa Teste','12345678901234','Rua Teste, 123','Referência Teste',100.00,'2024-05-31','92056f79-327d-4792-9543-ccf68f8597a9'),
-('43cbe748-32f5-48fe-86d1-a8a591f28b36','Empresa Teste 2','12345678901235','Rua Teste 2, 123','Referência Teste 2',200.00,'2024-05-31','92056f79-327d-4792-9543-ccf68f8597aa');
+('43cbe748-32f5-48fe-86d1-a8a591f28b35','Empresa Teste','12345678901234','Rua Teste, 123','Referência Teste',100.00,'2024-05-31','92056f79-327d-4792-9543-ccf68f8597a8'),
+('43cbe748-32f5-48fe-86d1-a8a591f28b36','Empresa Teste 2','12345678901235','Rua Teste 2, 123','Referência Teste 2',200.00,'2024-05-31','92056f79-327d-4792-9543-ccf68f8597a8'),
+('43cbe748-32f5-48fe-86d1-a8a591f28b37','Empresa ABC Ltda','98765432109876','Av. Principal, 456','Serviços prestados',350.50,'2024-06-15','92056f79-327d-4792-9543-ccf68f8597a8'),
+('43cbe748-32f5-48fe-86d1-a8a591f28b38','Comércio XYZ','54321098765432','Rua Comercial, 789','Venda de produtos',450.75,'2024-06-30','92056f79-327d-4792-9543-ccf68f8597a8'),
+('43cbe748-32f5-48fe-86d1-a8a591f28b39','Serviços Online','11112222333344','Rua Digital, 321','Consultoria',275.25,'2024-07-15','92056f79-327d-4792-9543-ccf68f8597a8');
 
 INSERT INTO faturamento (id, equipamento, total_equipamento, media_alugados, user_id)
 VALUES
-('ft001','Computador i5',1500.00,250.00,'92056f79-327d-4792-9543-ccf68f8597a9'),
-('ft002','Notebook Dell',2000.00,400.00,'92056f79-327d-4792-9543-ccf68f8597a9'),
-('ft003','Monitor 24"',800.00,150.00,'92056f79-327d-4792-9543-ccf68f8597a9');
+('ft001','Computador i5',1500.00,250.00,'92056f79-327d-4792-9543-ccf68f8597a8'),
+('ft002','Notebook Dell',2000.00,400.00,'92056f79-327d-4792-9543-ccf68f8597a8'),
+('ft003','Monitor 24"',800.00,150.00,'92056f79-327d-4792-9543-ccf68f8597a8'),
+('ft004','Impressora Laser',1200.00,180.00,'92056f79-327d-4792-9543-ccf68f8597a8'),
+('ft005','Servidor Rack',3500.00,550.00,'92056f79-327d-4792-9543-ccf68f8597a8');
 
 INSERT INTO precos (id, equipamento, investimento, residual, depreciacao_meses, preco_atual_mensal, margem, manutencao_atual, faturamento_id, user_id)
 VALUES
-('pr001','Computador i5',5000.00,500.00,24,180.50,15.50,50.00,'ft001','92056f79-327d-4792-9543-ccf68f8597a9'),
-('pr002','Notebook Dell',3500.00,350.00,36,85.50,10.50,75.00,'ft002','92056f79-327d-4792-9543-ccf68f8597a9'),
-('pr003','Monitor 24"',1200.00,120.00,48,22.50,8.50,25.00,'ft003','92056f79-327d-4792-9543-ccf68f8597a9');
+('pr001','Computador i5',5000.00,500.00,24,180.50,15.50,50.00,'ft001','92056f79-327d-4792-9543-ccf68f8597a8'),
+('pr002','Notebook Dell',3500.00,350.00,36,85.50,10.50,75.00,'ft002','92056f79-327d-4792-9543-ccf68f8597a8'),
+('pr003','Monitor 24"',1200.00,120.00,48,22.50,8.50,25.00,'ft003','92056f79-327d-4792-9543-ccf68f8597a8'),
+('pr004','Impressora Laser',1800.00,180.00,60,30.00,12.00,40.00,'ft004','92056f79-327d-4792-9543-ccf68f8597a8'),
+('pr005','Servidor Rack',4200.00,420.00,72,58.50,18.50,60.00,'ft005','92056f79-327d-4792-9543-ccf68f8597a8');
 
 INSERT INTO custos (id, descricao, valor, tipo_custo, user_id)
 VALUES
-('ct001','Aluguel de escritório',1500.00,'Aluguel','92056f79-327d-4792-9543-ccf68f8597a9'),
-('ct002','Material de escritório',350.75,'Material','92056f79-327d-4792-9543-ccf68f8597a9'),
-('ct003','Serviços de limpeza',200.00,'Serviço','92056f79-327d-4792-9543-ccf68f8597a9'),
-('ct004','Internet e telefonia',180.50,'Serviço','92056f79-327d-4792-9543-ccf68f8597a9'),
-('ct005','Equipamentos de TI',800.00,'Equipamento','92056f79-327d-4792-9543-ccf68f8597a9');
+('ct001','Aluguel de escritório',1500.00,'Aluguel','92056f79-327d-4792-9543-ccf68f8597a8'),
+('ct002','Material de escritório',350.75,'Material','92056f79-327d-4792-9543-ccf68f8597a8'),
+('ct003','Serviços de limpeza',200.00,'Serviço','92056f79-327d-4792-9543-ccf68f8597a8'),
+('ct004','Internet e telefonia',180.50,'Serviço','92056f79-327d-4792-9543-ccf68f8597a8'),
+('ct005','Equipamentos de TI',800.00,'Equipamento','92056f79-327d-4792-9543-ccf68f8597a8');

@@ -8,9 +8,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static java.math.RoundingMode.HALF_UP;
 
 @Service
 @RequiredArgsConstructor
@@ -33,12 +36,51 @@ public class CustoService {
     public CustosArrayResponse getAllCustos(String userId) {
         List<Custo> todosCustos = custoRepository.findByUserIdAndDeletedFalse(userId);
         
-        List<CustoCompletoResponse> custosCompletos = todosCustos.stream()
-            .map(custo -> convertToCompletoResponse(custo, todosCustos))
+        // Calcular totais por tipo de custo
+        double somaCustoFixo = todosCustos.stream()
+            .filter(custo -> "FIXO".equals(custo.getTipoCusto()))
+            .mapToDouble(custo -> custo.getValor().doubleValue())
+            .sum();
+
+        double somaCustoVariavel = todosCustos.stream()
+            .filter(custo -> "VARIÁVEL".equals(custo.getTipoCusto()))
+            .mapToDouble(custo -> custo.getValor().doubleValue())
+            .sum();
+
+        double somaTotal = somaCustoFixo + somaCustoVariavel;
+
+        double porcentagemFixo = somaTotal > 0 ? (somaCustoFixo / somaTotal) * 100 : 0;
+        double porcentagemVariavel = somaTotal > 0 ? (somaCustoVariavel / somaTotal) * 100 : 0;
+
+        // Criar lista de custos simples
+        List<CustoSimplesResponse> custosSimples = todosCustos.stream()
+            .map(this::convertToSimplesResponse)
             .collect(Collectors.toList());
         
+        // Criar resumo
+        ResumoCompletoResponse resumo = new ResumoCompletoResponse();
+        
+        ResumoCustosResponse custosFixos = new ResumoCustosResponse();
+        custosFixos.setValue(BigDecimal.valueOf(somaCustoFixo));
+        custosFixos.setPorcentagem(porcentagemFixo / 100);
+        
+        ResumoCustosResponse custosVariaveis = new ResumoCustosResponse();
+        custosVariaveis.setValue(BigDecimal.valueOf(somaCustoVariavel));
+        custosVariaveis.setPorcentagem(porcentagemVariavel / 100);
+        
+        ResumoCustosResponse total = new ResumoCustosResponse();
+        total.setValue(BigDecimal.valueOf(somaTotal));
+        total.setPorcentagem((porcentagemFixo + porcentagemVariavel) / 100);
+        
+        resumo.setCustosFixos(custosFixos);
+        resumo.setCustosVariaveis(custosVariaveis);
+        resumo.setTotal(total);
+        
+        // Montar resposta
         CustosArrayResponse response = new CustosArrayResponse();
-        response.setData(custosCompletos);
+        response.setData(custosSimples);
+        response.setResumo(resumo);
+        
         return response;
     }
     
@@ -47,7 +89,22 @@ public class CustoService {
             .orElseThrow(() -> new RuntimeException("Custo não encontrado"));
         
         List<Custo> todosCustos = custoRepository.findByUserIdAndDeletedFalse(userId);
-        return convertToCompletoResponse(custo, todosCustos);
+        
+        double somaCustoFixo = todosCustos.stream()
+            .filter(c -> "FIXO".equals(c.getTipoCusto()))
+            .mapToDouble(c -> c.getValor().doubleValue())
+            .sum();
+
+        double somaCustoVariavel = todosCustos.stream()
+            .filter(c -> "VARIÁVEL".equals(c.getTipoCusto()))
+            .mapToDouble(c -> c.getValor().doubleValue())
+            .sum();
+
+        double somaTotal = somaCustoFixo + somaCustoVariavel;
+        double porcentagemFixo = (somaCustoFixo / somaTotal) * 100;
+        double porcentagemVariavel = (somaCustoVariavel / somaTotal) * 100;
+        
+        return convertToCompletoResponse(custo, todosCustos, somaTotal, somaCustoFixo, somaCustoVariavel, porcentagemFixo, porcentagemVariavel);
     }
     
     public CustoResponse updateCusto(String id, CustoRequest request, String userId) {
@@ -114,58 +171,39 @@ public class CustoService {
         return response;
     }
     
-    private CustoCompletoResponse convertToCompletoResponse(Custo custo, List<Custo> todosCustos) {
+    private CustoSimplesResponse convertToSimplesResponse(Custo custo) {
+        CustoSimplesResponse response = new CustoSimplesResponse();
+        response.setId(custo.getId());
+        response.setDescricao(custo.getDescricao());
+        response.setValor(custo.getValor());
+        response.setTipoCusto(custo.getTipoCusto());
+        return response;
+    }
+    
+    private CustoCompletoResponse convertToCompletoResponse(Custo custo, List<Custo> todosCustos, double somaTotal, double somaCustoFixo, double somaCustoVariavel, double porcentagemFixo, double porcentagemVariavel) {
         CustoCompletoResponse response = new CustoCompletoResponse();
         
-        // Calcular valores
-        BigDecimal valueCustoFixo = todosCustos.stream()
-            .filter(c -> "FIXO".equalsIgnoreCase(c.getTipoCusto()))
-            .map(Custo::getValor)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        BigDecimal valueCustoVariavel = todosCustos.stream()
-            .filter(c -> "VARIAVEL".equalsIgnoreCase(c.getTipoCusto()))
-            .map(Custo::getValor)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        BigDecimal soma = valueCustoFixo.add(valueCustoVariavel);
-        
-        // Calcular porcentagens
-        BigDecimal porcentagemValorFixo = soma.compareTo(BigDecimal.ZERO) > 0 
-            ? valueCustoFixo.divide(soma, 4, BigDecimal.ROUND_HALF_UP)
-            : BigDecimal.ZERO;
-        
-        BigDecimal porcentagemValorVariavel = soma.compareTo(BigDecimal.ZERO) > 0 
-            ? valueCustoVariavel.divide(soma, 4, BigDecimal.ROUND_HALF_UP)
-            : BigDecimal.ZERO;
-        
-        // Calcular porcentagem individual do custo
-        BigDecimal porcentagemIndividual = soma.compareTo(BigDecimal.ZERO) > 0 
-            ? custo.getValor().divide(soma, 4, BigDecimal.ROUND_HALF_UP)
-            : BigDecimal.ZERO;
-        
-        // Criar valueDB
+        // Criar valueDB (sem porcentagem individual)
         CustoDetalheResponse valueDB = new CustoDetalheResponse();
         valueDB.setId(custo.getId());
         valueDB.setDescricao(custo.getDescricao());
         valueDB.setValor(custo.getValor());
         valueDB.setTipoCusto(custo.getTipoCusto());
-        valueDB.setPorcentagem(porcentagemIndividual);
         
-        // Criar resumo
+        // Criar resumo (com porcentagens gerais)
         ResumoCompletoResponse resumo = new ResumoCompletoResponse();
         
         ResumoCustosResponse custosFixos = new ResumoCustosResponse();
-        custosFixos.setValue(valueCustoFixo);
-        custosFixos.setPorcentagem(porcentagemValorFixo);
+        custosFixos.setValue(BigDecimal.valueOf(somaCustoFixo));
+        custosFixos.setPorcentagem(porcentagemFixo / 100);
         
         ResumoCustosResponse custosVariaveis = new ResumoCustosResponse();
-        custosVariaveis.setValue(valueCustoVariavel);
-        custosVariaveis.setPorcentagem(porcentagemValorVariavel);
+        custosVariaveis.setValue(BigDecimal.valueOf(somaCustoVariavel));
+        custosVariaveis.setPorcentagem(porcentagemVariavel / 100);
         
         ResumoCustosResponse total = new ResumoCustosResponse();
-        total.setValue(soma);
-        total.setPorcentagem(porcentagemValorFixo.add(porcentagemValorVariavel));
+        total.setValue(BigDecimal.valueOf(somaTotal));
+        total.setPorcentagem((porcentagemFixo + porcentagemVariavel) / 100);
         
         resumo.setCustosFixos(custosFixos);
         resumo.setCustosVariaveis(custosVariaveis);

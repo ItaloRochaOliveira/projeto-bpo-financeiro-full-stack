@@ -142,7 +142,7 @@ public class User {
         this.deletedAt = deletedAt;
     }
 
-    public List<Boleto> getBoletos() {
+ public List<Boleto> getBoletos() {
         return boletos;
     }
 

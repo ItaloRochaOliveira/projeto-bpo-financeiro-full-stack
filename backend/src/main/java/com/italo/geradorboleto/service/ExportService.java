@@ -1,7 +1,6 @@
 package com.italo.geradorboleto.service;
 
-import com.italo.geradorboleto.dto.CustoCompletoResponse;
-import com.italo.geradorboleto.dto.CustoDetalheResponse;
+import com.italo.geradorboleto.dto.CustoSimplesResponse;
 import com.italo.geradorboleto.dto.CustosArrayResponse;
 import com.italo.geradorboleto.dto.FaturamentoResponse;
 import com.italo.geradorboleto.dto.PrecoResponse;
@@ -29,7 +28,7 @@ public class ExportService {
         log.info("Iniciando exportação de custos para userId: {}", userId);
         
         CustosArrayResponse custosResponse = custoService.getAllCustos(userId);
-        List<CustoCompletoResponse> custos = custosResponse != null ? custosResponse.getData() : null;
+        List<CustoSimplesResponse> custos = custosResponse != null ? custosResponse.getData() : null;
         
         log.info("CustosResponse: {}", custosResponse);
         log.info("Quantidade de custos: {}", custos != null ? custos.size() : 0);
@@ -94,7 +93,7 @@ public class ExportService {
 
     public byte[] exportarCompleto(String userId) throws IOException {
         CustosArrayResponse custosResponse = custoService.getAllCustos(userId);
-        List<CustoCompletoResponse> custos = custosResponse != null ? custosResponse.getData() : null;
+        List<CustoSimplesResponse> custos = custosResponse != null ? custosResponse.getData() : null;
         List<FaturamentoResponse> faturamentos = faturamentoService.getAllFaturamentos(userId);
         List<PrecoResponse> precos = precoService.getAllPrecos(userId);
 
@@ -154,23 +153,18 @@ public class ExportService {
         }
     }
 
-    private void createCustosData(Sheet sheet, List<CustoCompletoResponse> custos) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-        
+    private void createCustosData(Sheet sheet, List<CustoSimplesResponse> custos) {
         int rowNum = 1;
-        for (CustoCompletoResponse custo : custos) {
-            CustoDetalheResponse detalhe = custo.getValueDB();
-            if (detalhe != null) {
-                Row row = sheet.createRow(rowNum++);
-                
-                row.createCell(0).setCellValue(detalhe.getId());
-                row.createCell(1).setCellValue(detalhe.getDescricao());
-                row.createCell(2).setCellValue(detalhe.getValor().doubleValue());
-                row.createCell(3).setCellValue(detalhe.getTipoCusto());
-                row.createCell(4).setCellValue(detalhe.getPorcentagem() != null ? detalhe.getPorcentagem().doubleValue() : 0.0);
-                row.createCell(5).setCellValue(""); // Placeholder para createdAt
-                row.createCell(6).setCellValue(""); // Placeholder para updatedAt
-            }
+        for (CustoSimplesResponse custo : custos) {
+            Row row = sheet.createRow(rowNum++);
+            
+            row.createCell(0).setCellValue(custo.getId());
+            row.createCell(1).setCellValue(custo.getDescricao());
+            row.createCell(2).setCellValue(custo.getValor().doubleValue());
+            row.createCell(3).setCellValue(custo.getTipoCusto());
+            row.createCell(4).setCellValue(""); // Sem porcentagem individual
+            row.createCell(5).setCellValue(""); // Placeholder para createdAt
+            row.createCell(6).setCellValue(""); // Placeholder para updatedAt
         }
     }
 

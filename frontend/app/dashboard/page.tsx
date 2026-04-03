@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { 
   TrendingUp, 
   DollarSign, 
@@ -18,6 +19,7 @@ import {
   AlertTriangle
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { apiReq } from '@/utils/ApiReq'
 
 interface DashboardStats {
   totalCustos: number
@@ -36,12 +38,74 @@ export default function DashboardPage() {
   })
   const [isLoading, setIsLoading] = useState(true)
 
-  const handleExportComplete = () => {
-    alert('Funcionalidade de exportação completa indisponível nesta versão. Em breve estará disponível!')
+  const handleExportComplete = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('Token não encontrado')
+        return
+      }
+      
+      const response = await apiReq(`http://localhost:3006/api/export/completo`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      
+      // Criar blob e download
+      if(response && response.status === 200) {
+        const blob = new Blob([response.data], { 
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        })
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `bpo_financeiro_completo_${new Date().toISOString().split('T')[0]}.xlsx`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        toast.success('Planilha completa exportada com sucesso!')
+      }
+    } catch (error) {
+      toast.error('Erro ao exportar planilha')
+    }
   }
 
-  const handleExportReport = () => {
-    alert('Funcionalidade de exportação de relatório indisponível nesta versão. Em breve estará disponível!')
+  const handleExportReport = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('Token não encontrado')
+        return
+      }
+      
+      const response = await apiReq(`http://localhost:3006/api/export/excel`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      
+      // Criar blob e download
+      if(response && response.status === 200) {
+        const blob = new Blob([response.data], { 
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        })
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `bpo_financeiro_relatorio_${new Date().toISOString().split('T')[0]}.xlsx`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        toast.success('Relatório exportado com sucesso!')
+      }
+    } catch (error) {
+      toast.error('Erro ao exportar relatório')
+    }
   }
 
   const handleNewReport = () => {
@@ -71,14 +135,26 @@ export default function DashboardPage() {
     // Carregar dados reais das APIs
     const loadStats = async () => {
       try {
-        const user = JSON.parse(localStorage.getItem('user') || '{}')
-        const userId = user.email || 'user123'
+        const token = localStorage.getItem('token')
+        if (!token) {
+          router.push('/auth')
+          return
+        }
         
-        // Buscar dados das APIs reais
+        // Buscar dados das APIs reais com token
         const [custosResponse, faturamentoResponse, precosResponse] = await Promise.all([
-          fetch(`http://localhost:3006/api/custos/all?userId=${userId}`),
-          fetch(`http://localhost:3006/api/faturamento/all?userId=${userId}`),
-          fetch(`http://localhost:3006/api/precos/all?userId=${userId}`)
+          apiReq(`http://localhost:3006/api/custos`, {
+            method: 'GET',
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          apiReq(`http://localhost:3006/api/faturamento`, {
+            method: 'GET',
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          apiReq(`http://localhost:3006/api/precos`, {
+            method: 'GET',
+            headers: { Authorization: `Bearer ${token}` }
+          })
         ])
 
         let totalCustos = 0
@@ -86,14 +162,14 @@ export default function DashboardPage() {
         let totalEquipamentos = 0
 
         // Processar dados de custos
-        if (custosResponse.ok) {
-          const custosData = await custosResponse.json()
+        if (custosResponse && custosResponse.status === 200) {
+          const custosData = custosResponse.data
           totalCustos = custosData.data?.reduce((sum: number, c: any) => sum + c.valor, 0) || 0
         }
 
         // Processar dados de faturamento
-        if (faturamentoResponse.ok) {
-          const faturamentoData = await faturamentoResponse.json()
+        if (faturamentoResponse && faturamentoResponse.status === 200) {
+          const faturamentoData = faturamentoResponse.data
           totalFaturamento = faturamentoData?.reduce((sum: number, f: any) => sum + (f.mediaAlugados * 1000), 0) || 0
           totalEquipamentos = faturamentoData?.length || 0
         }
