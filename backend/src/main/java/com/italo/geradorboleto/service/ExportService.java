@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -36,17 +37,16 @@ public class ExportService {
         try (Workbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
-            // Aba de Detalhes
-            Sheet detalhesSheet = workbook.createSheet("Custos Detalhados");
-            createCustosHeader(detalhesSheet);
-            if (custos != null && !custos.isEmpty()) {
-                createCustosData(detalhesSheet, custos);
-            }
+            Sheet sheet = workbook.createSheet("Custos");
+            
+            // Tabela de Resumo (linhas 0-3)
+            createResumoSection(sheet, custos);
+            
+            // Tabela Detalhada (começa na linha 5)
+            createDetalhadosSection(sheet, custos);
 
             // Auto-size columns
-            for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-                autoSizeColumns(workbook.getSheetAt(i));
-            }
+            autoSizeColumns(sheet);
 
             workbook.write(out);
             byte[] result = out.toByteArray();
@@ -101,11 +101,9 @@ public class ExportService {
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             // Aba de Custos Detalhados
-            Sheet custosSheet = workbook.createSheet("Custos Detalhados");
-            createCustosHeader(custosSheet);
-            if (custos != null && !custos.isEmpty()) {
-                createCustosData(custosSheet, custos);
-            }
+            Sheet custosSheet = workbook.createSheet("Custos");
+            createResumoSection(custosSheet, custos);
+            createDetalhadosSection(custosSheet, custos);
             autoSizeColumns(custosSheet);
 
             // Aba de Faturamento
@@ -129,43 +127,245 @@ public class ExportService {
         }
     }
 
-    private void createCustosHeader(Sheet sheet) {
-        Row headerRow = sheet.createRow(0);
-        headerRow.createCell(0).setCellValue("ID");
-        headerRow.createCell(1).setCellValue("Descrição");
-        headerRow.createCell(2).setCellValue("Valor (R$)");
-        headerRow.createCell(3).setCellValue("Tipo de Custo");
-        headerRow.createCell(4).setCellValue("Porcentagem (%)");
-        headerRow.createCell(5).setCellValue("Data de Criação");
-        headerRow.createCell(6).setCellValue("Data de Atualização");
+    private void createResumoSection(Sheet sheet, List<CustoSimplesResponse> custos) {
+        // Calcular valores
+        double totalFixos = 0.0;
+        double totalVariaveis = 0.0;
+        
+        if (custos != null) {
+            for (CustoSimplesResponse custo : custos) {
+                if ("FIXO".equalsIgnoreCase(custo.getTipoCusto())) {
+                    totalFixos += custo.getValor().doubleValue();
+                } else if ("VARIÁVEL".equalsIgnoreCase(custo.getTipoCusto()) || "VARIAVEL".equalsIgnoreCase(custo.getTipoCusto())) {
+                    totalVariaveis += custo.getValor().doubleValue();
+                }
+            }
+        }
+        
+        double totalGeral = totalFixos + totalVariaveis;
+        double percFixos = totalGeral > 0 ? (totalFixos / totalGeral) * 100 : 0;
+        double percVariaveis = totalGeral > 0 ? (totalVariaveis / totalGeral) * 100 : 0;
+        
+        // Estilos
+        CellStyle headerStyle = createHeaderStyle(sheet.getWorkbook(), IndexedColors.DARK_BLUE);
+        CellStyle titleStyle = createTitleStyle(sheet.getWorkbook());
+        CellStyle currencyStyle = createCurrencyStyle(sheet.getWorkbook());
+        
+        // Título "Resumo"
+        Row titleRow = sheet.createRow(0);
+        Cell titleCell = titleRow.createCell(0);
+        titleCell.setCellValue("Resumo");
+        titleCell.setCellStyle(titleStyle);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
+        
+        // Cabeçalho da tabela de resumo
+        Row headerRow = sheet.createRow(1);
+        String[] headers = {"Descrição", "Valor", "Percentual"};
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(headerStyle);
+        }
+        
+        // Linha: Custos Fixos
+        Row fixosRow = sheet.createRow(2);
+        fixosRow.createCell(0).setCellValue("Custos Fixos");
+        fixosRow.createCell(0).setCellStyle(createDataStyle(sheet.getWorkbook()));
+        Cell fixosValorCell = fixosRow.createCell(1);
+        fixosValorCell.setCellValue(totalFixos);
+        fixosValorCell.setCellStyle(currencyStyle);
+        Cell fixosPercentCell = fixosRow.createCell(2);
+        fixosPercentCell.setCellValue(String.format("%.1f%%", percFixos));
+        fixosPercentCell.setCellStyle(createPercentStyle(sheet.getWorkbook()));
+        
+        // Linha: Custos Variáveis
+        Row variaveisRow = sheet.createRow(3);
+        variaveisRow.createCell(0).setCellValue("Custos Variáveis");
+        variaveisRow.createCell(0).setCellStyle(createDataStyle(sheet.getWorkbook()));
+        Cell variaveisValorCell = variaveisRow.createCell(1);
+        variaveisValorCell.setCellValue(totalVariaveis);
+        variaveisValorCell.setCellStyle(currencyStyle);
+        Cell variaveisPercentCell = variaveisRow.createCell(2);
+        variaveisPercentCell.setCellValue(String.format("%.1f%%", percVariaveis));
+        variaveisPercentCell.setCellStyle(createPercentStyle(sheet.getWorkbook()));
+        
+        // Linha: Total
+        Row totalRow = sheet.createRow(4);
+        totalRow.createCell(0).setCellValue("Custos Fixos + Variáveis");
+        totalRow.createCell(0).setCellStyle(createTotalStyle(sheet.getWorkbook()));
+        Cell totalValorCell = totalRow.createCell(1);
+        totalValorCell.setCellValue(totalGeral);
+        totalValorCell.setCellStyle(createTotalStyle(sheet.getWorkbook()));
+        Cell totalPercentCell = totalRow.createCell(2);
+        totalPercentCell.setCellValue("100.0%");
+        totalPercentCell.setCellStyle(createTotalStyle(sheet.getWorkbook()));
+    }
 
-        // Style para header
-        CellStyle headerStyle = sheet.getWorkbook().createCellStyle();
-        Font headerFont = sheet.getWorkbook().createFont();
-        headerFont.setBold(true);
-        headerFont.setColor(IndexedColors.WHITE.getIndex());
-        headerStyle.setFont(headerFont);
-        headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
-        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-
-        for (int i = 0; i < 7; i++) {
-            headerRow.getCell(i).setCellStyle(headerStyle);
+    private void createDetalhadosSection(Sheet sheet, List<CustoSimplesResponse> custos) {
+        // Calcular total para percentuais
+        double totalGeral = 0.0;
+        if (custos != null) {
+            for (CustoSimplesResponse custo : custos) {
+                totalGeral += custo.getValor().doubleValue();
+            }
+        }
+        
+        // Espaço antes da tabela detalhada
+        Row spaceRow = sheet.createRow(5);
+        spaceRow.createCell(0).setCellValue("");
+        
+        // Título "Item"
+        Row titleRow = sheet.createRow(6);
+        Cell titleCell = titleRow.createCell(0);
+        titleCell.setCellValue("Item");
+        titleCell.setCellStyle(createTitleStyle(sheet.getWorkbook()));
+        sheet.addMergedRegion(new CellRangeAddress(6, 6, 0, 4));
+        
+        // Cabeçalho da tabela detalhada
+        Row headerRow = sheet.createRow(7);
+        String[] headers = {"Descrição", "Valor", "Tipo de Custo", "%"};
+        CellStyle headerStyle = createHeaderStyle(sheet.getWorkbook(), IndexedColors.DARK_GREEN);
+        
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(headerStyle);
+        }
+        
+        // Dados detalhados
+        if (custos != null && !custos.isEmpty()) {
+            CellStyle currencyStyle = createCurrencyStyle(sheet.getWorkbook());
+            CellStyle dataStyle = createDataStyle(sheet.getWorkbook());
+            CellStyle percentStyle = createPercentStyle(sheet.getWorkbook());
+            int rowNum = 8;
+            
+            for (CustoSimplesResponse custo : custos) {
+                Row row = sheet.createRow(rowNum++);
+                
+                // Descrição
+                Cell descCell = row.createCell(0);
+                descCell.setCellValue(custo.getDescricao());
+                descCell.setCellStyle(dataStyle);
+                
+                // Valor
+                Cell valorCell = row.createCell(1);
+                valorCell.setCellValue(custo.getValor().doubleValue());
+                valorCell.setCellStyle(currencyStyle);
+                
+                // Tipo de Custo
+                String tipoCusto = "FIXO".equalsIgnoreCase(custo.getTipoCusto()) ? "Fixo" : "Variável";
+                Cell tipoCell = row.createCell(2);
+                tipoCell.setCellValue(tipoCusto);
+                tipoCell.setCellStyle(dataStyle);
+                
+                // Percentual
+                double percentual = totalGeral > 0 ? (custo.getValor().doubleValue() / totalGeral) * 100 : 0;
+                Cell percentCell = row.createCell(3);
+                percentCell.setCellValue(String.format("%.1f%%", percentual));
+                percentCell.setCellStyle(percentStyle);
+            }
         }
     }
 
-    private void createCustosData(Sheet sheet, List<CustoSimplesResponse> custos) {
-        int rowNum = 1;
-        for (CustoSimplesResponse custo : custos) {
-            Row row = sheet.createRow(rowNum++);
-            
-            row.createCell(0).setCellValue(custo.getId());
-            row.createCell(1).setCellValue(custo.getDescricao());
-            row.createCell(2).setCellValue(custo.getValor().doubleValue());
-            row.createCell(3).setCellValue(custo.getTipoCusto());
-            row.createCell(4).setCellValue(""); // Sem porcentagem individual
-            row.createCell(5).setCellValue(""); // Placeholder para createdAt
-            row.createCell(6).setCellValue(""); // Placeholder para updatedAt
-        }
+    private CellStyle createHeaderStyle(Workbook workbook, IndexedColors color) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setColor(IndexedColors.WHITE.getIndex());
+        font.setFontHeightInPoints((short) 11);
+        style.setFont(font);
+        style.setFillForegroundColor(color.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setTopBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        style.setBottomBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        style.setLeftBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        style.setRightBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        return style;
+    }
+
+    private CellStyle createTitleStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 16);
+        font.setColor(IndexedColors.DARK_BLUE.getIndex()); // Cor similar ao account-primary
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.LEFT);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        return style;
+    }
+
+    private CellStyle createCurrencyStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        style.setDataFormat((short) 8); // Formato de moeda padrão
+        style.setAlignment(HorizontalAlignment.RIGHT);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setTopBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setBottomBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setLeftBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setRightBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        return style;
+    }
+
+    private CellStyle createDataStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        style.setAlignment(HorizontalAlignment.LEFT);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setTopBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setBottomBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setLeftBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setRightBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        return style;
+    }
+
+    private CellStyle createPercentStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setTopBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setBottomBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setLeftBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setRightBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        return style;
+    }
+
+    private CellStyle createTotalStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setColor(IndexedColors.DARK_GREEN.getIndex()); // Cor similar ao account-success
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.RIGHT);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.MEDIUM);
+        style.setBorderBottom(BorderStyle.MEDIUM);
+        style.setBorderLeft(BorderStyle.MEDIUM);
+        style.setBorderRight(BorderStyle.MEDIUM);
+        style.setTopBorderColor(IndexedColors.DARK_GREEN.getIndex());
+        style.setBottomBorderColor(IndexedColors.DARK_GREEN.getIndex());
+        style.setLeftBorderColor(IndexedColors.DARK_GREEN.getIndex());
+        style.setRightBorderColor(IndexedColors.DARK_GREEN.getIndex());
+        style.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex()); // Cor similar ao account-light
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        return style;
     }
 
     private void createFaturamentoData(Sheet sheet, List<FaturamentoResponse> faturamentos) {

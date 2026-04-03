@@ -257,8 +257,114 @@ export default function CustosPage() {
     }
   }
 
-  const handleExport = () => {
-    toast.info('Funcionalidade de exportação indisponível nesta versão. Em breve estará disponível!')
+  const handleExport = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('Token não encontrado')
+        return
+      }
+
+      // Fazer download do arquivo Excel de custos
+      const response = await fetch('http://localhost:3006/api/export/custos', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        // Obter o blob do arquivo
+        const blob = await response.blob()
+        
+        // Criar URL para o blob
+        const url = window.URL.createObjectURL(blob)
+        
+        // Criar link para download
+        const a = document.createElement('a')
+        a.href = url
+        
+        // Obter nome do arquivo do header ou usar padrão
+        const contentDisposition = response.headers.get('content-disposition')
+        let filename = 'custos.xlsx'
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+          if (filenameMatch) {
+            filename = filenameMatch[1]
+          }
+        }
+        
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        
+        // Limpar
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        
+        toast.success('Excel exportado com sucesso!')
+      } else {
+        toast.error('Erro ao exportar Excel')
+      }
+    } catch (error) {
+      console.error('Erro ao exportar Excel:', error)
+      toast.error('Erro ao exportar Excel')
+    }
+  }
+
+  const handleExportReport = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('Token não encontrado')
+        return
+      }
+
+      // Fazer download do arquivo Excel completo
+      const response = await fetch('http://localhost:3006/api/export/completo', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        // Obter o blob do arquivo
+        const blob = await response.blob()
+        
+        // Criar URL para o blob
+        const url = window.URL.createObjectURL(blob)
+        
+        // Criar link para download
+        const a = document.createElement('a')
+        a.href = url
+        
+        // Obter nome do arquivo do header ou usar padrão
+        const contentDisposition = response.headers.get('content-disposition')
+        let filename = 'bpo_financeiro_completo.xlsx'
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+          if (filenameMatch) {
+            filename = filenameMatch[1]
+          }
+        }
+        
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        
+        // Limpar
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        
+        toast.success('Relatório exportado com sucesso!')
+      } else {
+        toast.error('Erro ao exportar relatório')
+      }
+    } catch (error) {
+      console.error('Erro ao exportar relatório:', error)
+      toast.error('Erro ao exportar relatório')
+    }
   }
 
   if (isLoading) {
@@ -303,7 +409,7 @@ export default function CustosPage() {
             <Download className="w-4 h-4 mr-2" />
             Exportar Tudo
           </button>
-          <button className="account-btn-secondary">
+          <button className="account-btn-secondary" onClick={handleExportReport}>
             <PieChart className="w-4 h-4 mr-2" />
             Exportar Relatório
           </button>
