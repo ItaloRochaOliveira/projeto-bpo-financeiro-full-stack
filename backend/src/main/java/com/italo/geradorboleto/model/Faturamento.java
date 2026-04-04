@@ -7,7 +7,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -45,6 +44,10 @@ public class Faturamento {
     @Column(name = "user_id", nullable = false, length = 36)
     private String userId;
     
-    @OneToMany(mappedBy = "faturamento", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Preco> precos;
+    @Column(name = "preco_id", length = 36)
+    private String precoId;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "preco_id", referencedColumnName = "id", insertable = false, updatable = false)
+    private Preco preco;
 }

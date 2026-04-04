@@ -10,6 +10,9 @@ public class FaturamentoResponse {
     
     private String id;
     private String equipamento;
+    private BigDecimal totalEquipamento;
     private BigDecimal mediaAlugados;
     private BigDecimal porcentagem;
+    private String precoId;
+    private String precoEquipamento;
 }

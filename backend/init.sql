@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS faturamento(
     equipamento VARCHAR(255) NOT NULL,
     total_equipamento NUMERIC(10,2) NOT NULL,
     media_alugados NUMERIC(10,2) NOT NULL,
+    preco_id VARCHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
     deleted BOOLEAN DEFAULT FALSE,
@@ -48,13 +49,11 @@ CREATE TABLE IF NOT EXISTS precos(
     preco_atual_mensal NUMERIC(10,2) NOT NULL,
     margem NUMERIC(10,2) NOT NULL,
     manutencao_atual NUMERIC(10,2) NOT NULL,
-    faturamento_id VARCHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
     deleted BOOLEAN DEFAULT FALSE,
     deleted_at TIMESTAMP,
     user_id VARCHAR(36) NOT NULL,
-    FOREIGN KEY (faturamento_id) REFERENCES faturamento(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -93,13 +92,13 @@ VALUES
 ('ft004','Impressora Laser',1200.00,180.00,'92056f79-327d-4792-9543-ccf68f8597a8'),
 ('ft005','Servidor Rack',3500.00,550.00,'92056f79-327d-4792-9543-ccf68f8597a8');
 
-INSERT INTO precos (id, equipamento, investimento, residual, depreciacao_meses, preco_atual_mensal, margem, manutencao_atual, faturamento_id, user_id)
+INSERT INTO precos (id, equipamento, investimento, residual, depreciacao_meses, preco_atual_mensal, margem, manutencao_atual, user_id)
 VALUES
-('pr001','Computador i5',5000.00,500.00,24,180.50,15.50,50.00,'ft001','92056f79-327d-4792-9543-ccf68f8597a8'),
-('pr002','Notebook Dell',3500.00,350.00,36,85.50,10.50,75.00,'ft002','92056f79-327d-4792-9543-ccf68f8597a8'),
-('pr003','Monitor 24"',1200.00,120.00,48,22.50,8.50,25.00,'ft003','92056f79-327d-4792-9543-ccf68f8597a8'),
-('pr004','Impressora Laser',1800.00,180.00,60,30.00,12.00,40.00,'ft004','92056f79-327d-4792-9543-ccf68f8597a8'),
-('pr005','Servidor Rack',4200.00,420.00,72,58.50,18.50,60.00,'ft005','92056f79-327d-4792-9543-ccf68f8597a8');
+('pr001','Computador i5',5000.00,500.00,24,180.50,15.50,50.00,'92056f79-327d-4792-9543-ccf68f8597a8'),
+('pr002','Notebook Dell',3500.00,350.00,36,85.50,10.50,75.00,'92056f79-327d-4792-9543-ccf68f8597a8'),
+('pr003','Monitor 24"',1200.00,120.00,48,22.50,8.50,25.00,'92056f79-327d-4792-9543-ccf68f8597a8'),
+('pr004','Impressora Laser',1800.00,180.00,60,30.00,12.00,40.00,'92056f79-327d-4792-9543-ccf68f8597a8'),
+('pr005','Servidor Rack',4200.00,420.00,72,58.50,18.50,60.00,'92056f79-327d-4792-9543-ccf68f8597a8');
 
 INSERT INTO custos (id, descricao, valor, tipo_custo, user_id)
 VALUES
@@ -108,3 +107,28 @@ VALUES
 ('ct003','Serviços de limpeza',200.00,'Serviço','92056f79-327d-4792-9543-ccf68f8597a8'),
 ('ct004','Internet e telefonia',180.50,'Serviço','92056f79-327d-4792-9543-ccf68f8597a8'),
 ('ct005','Equipamentos de TI',800.00,'Equipamento','92056f79-327d-4792-9543-ccf68f8597a8');
+
+-- Adicionar foreign key de faturamento para preco
+ALTER TABLE faturamento ADD CONSTRAINT fk_faturamento_preco 
+    FOREIGN KEY (preco_id) REFERENCES precos(id);
+
+-- Adicionar índice para performance
+CREATE INDEX IF NOT EXISTS idx_faturamento_preco_id ON faturamento(preco_id);
+
+-- Migrar relação: associar faturamento com preco
+UPDATE faturamento f 
+SET preco_id = (
+    SELECT p.id 
+    FROM precos p 
+    WHERE p.equipamento = f.equipamento 
+    AND p.deleted = FALSE
+    AND p.user_id = f.user_id
+    LIMIT 1
+)
+WHERE EXISTS (
+    SELECT 1 
+    FROM precos p 
+    WHERE p.equipamento = f.equipamento 
+    AND p.deleted = FALSE
+    AND p.user_id = f.user_id
+);

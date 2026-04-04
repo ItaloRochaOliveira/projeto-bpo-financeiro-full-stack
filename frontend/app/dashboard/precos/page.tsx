@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { Toast } from '@/components/ui/toast'
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog'
 import { 
   TrendingUp, 
   Plus, 
@@ -32,7 +34,7 @@ interface Preco {
   depreciacaoMeses: number
   precoAtualMensal: number
   margem: number
-  manutencaoAnual: number
+  manutencaoAtual: number
   qtde: number
   taxaOcupacao: number
   mediaAlugados: number
@@ -57,6 +59,8 @@ export default function PrecosPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingPreco, setEditingPreco] = useState<Preco | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [precoToDelete, setPrecoToDelete] = useState<Preco | null>(null)
   const [formData, setFormData] = useState({
     equipamento: '', 
     investimento: '', 
@@ -64,7 +68,7 @@ export default function PrecosPage() {
     depreciacaoMeses: '', 
     precoAtualMensal: '', 
     margem: '', 
-    manutencaoAnual: ''
+    manutencaoAtual: ''
   })
 
   useEffect(() => {
@@ -93,7 +97,7 @@ export default function PrecosPage() {
         }
       })
       
-      if (response.status === 200) {
+      if (response && response.status === 200) {
         const data = response.data
         setPrecos(data || [])
       } else {
@@ -112,57 +116,86 @@ export default function PrecosPage() {
     
     if (!formData.equipamento || !formData.investimento || !formData.residual || 
         !formData.depreciacaoMeses || !formData.precoAtualMensal || 
-        !formData.margem || !formData.manutencaoAnual) {
+        !formData.margem || !formData.manutencaoAtual) {
       toast.error('Preencha todos os campos')
       return
     }
 
+    // Validar valores numéricos
+    const investimento = parseFloat(formData.investimento)
+    const residual = parseFloat(formData.residual)
+    const depreciacaoMeses = parseInt(formData.depreciacaoMeses)
+    const precoAtualMensal = parseFloat(formData.precoAtualMensal)
+    const margem = parseFloat(formData.margem)
+    const manutencaoAtual = parseFloat(formData.manutencaoAtual)
+
+    if (isNaN(investimento) || isNaN(residual) || isNaN(depreciacaoMeses) || 
+        isNaN(precoAtualMensal) || isNaN(margem) || isNaN(manutencaoAtual)) {
+      toast.error('Todos os valores numéricos devem ser válidos')
+      return
+    }
+
+    if (investimento <= 0 || precoAtualMensal <= 0 || depreciacaoMeses <= 0) {
+      toast.error('Investimento, Preço Mensal e Meses de Depreciação devem ser maiores que zero')
+      return
+    }
+
     try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        router.push('/auth')
+        return
+      }
+
+      const requestData = {
+        equipamento: formData.equipamento,
+        investimento: investimento,
+        residual: residual,
+        depreciacaoMeses: depreciacaoMeses,
+        precoAtualMensal: precoAtualMensal,
+        margem: margem,
+        manutencaoAtual: manutencaoAtual
+      }
+
+      let response: any
       if (editingPreco) {
-        setPrecos(prev => prev.map(preco => 
-          preco.id === editingPreco.id 
-            ? { 
-                ...preco, 
-                equipamento: formData.equipamento,
-                investimento: parseFloat(formData.investimento),
-                residual: parseFloat(formData.residual),
-                depreciacaoMeses: parseInt(formData.depreciacaoMeses),
-                precoAtualMensal: parseFloat(formData.precoAtualMensal),
-                margem: parseFloat(formData.margem),
-                manutencaoAnual: parseFloat(formData.manutencaoAnual)
-              }
-            : preco
-        ))
-        toast.success('Preço atualizado com sucesso!')
-      } else {
-        const newPreco: Preco = {
-          id: Date.now().toString(),
-          equipamento: formData.equipamento,
-          investimento: parseFloat(formData.investimento),
-          residual: parseFloat(formData.residual),
-          depreciacaoMeses: parseInt(formData.depreciacaoMeses),
-          precoAtualMensal: parseFloat(formData.precoAtualMensal),
-          margem: parseFloat(formData.margem),
-          manutencaoAnual: parseFloat(formData.manutencaoAnual),
-          qtde: 0,
-          taxaOcupacao: 0,
-          mediaAlugados: 0,
-          rateio: 0,
-          custoRateado: 0,
-          manutencaoMensal: 0,
-          custo: 0,
-          depreciacao: 0,
-          lucro: 0,
-          pontoEquilibrio: 0,
-          precoAdequado: 0,
-          precoAtualMenosPrecoAdequado: 0,
-          faturamentoEstimado: 0,
-          resultado: 0,
-          lucroTotal: 0,
-          paybackMeses: 0
+        // Atualizar preço existente
+        response = await apiReq(`http://localhost:3006/api/precos/${editingPreco.id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          data: requestData
+        })
+        
+        if (response && response.status === 200) {
+          setPrecos(prev => prev.map(preco => 
+            preco.id === editingPreco.id ? response.data : preco
+          ))
+          toast.success('Preço atualizado com sucesso!')
+        } else {
+          toast.error('Erro ao atualizar preço')
+          return
         }
-        setPrecos(prev => [...prev, newPreco])
-        toast.success('Preço adicionado com sucesso!')
+      } else {
+        // Criar novo preço
+        response = await apiReq(`http://localhost:3006/api/precos`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          data: requestData
+        })
+        
+        if (response && response.status === 200) {
+          setPrecos(prev => [...prev, response.data])
+          toast.success('Preço adicionado com sucesso!')
+        } else {
+          toast.error('Erro ao adicionar preço')
+          return
+        }
       }
       
       setDialogOpen(false)
@@ -174,9 +207,13 @@ export default function PrecosPage() {
         depreciacaoMeses: '', 
         precoAtualMensal: '', 
         margem: '', 
-        manutencaoAnual: '' 
+        manutencaoAtual: '' 
       })
+      
+      // Recarregar dados para garantir consistência
+      await loadPrecos()
     } catch (error) {
+      console.error('Erro ao salvar preço:', error)
       toast.error('Erro ao salvar preço')
     }
   }
@@ -184,23 +221,51 @@ export default function PrecosPage() {
   const handleEdit = (preco: Preco) => {
     setEditingPreco(preco)
     setFormData({
-      equipamento: preco.equipamento,
-      investimento: preco.investimento.toString(),
-      residual: preco.residual.toString(),
-      depreciacaoMeses: preco.depreciacaoMeses.toString(),
-      precoAtualMensal: preco.precoAtualMensal.toString(),
-      margem: preco.margem.toString(),
-      manutencaoAnual: preco.manutencaoAnual.toString()
+      equipamento: preco.equipamento || '',
+      investimento: (preco.investimento || 0).toString(),
+      residual: (preco.residual || 0).toString(),
+      depreciacaoMeses: (preco.depreciacaoMeses || 0).toString(),
+      precoAtualMensal: (preco.precoAtualMensal || 0).toString(),
+      margem: (preco.margem || 0).toString(),
+      manutencaoAtual: (preco.manutencaoAtual || 0).toString()
     })
     setDialogOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (preco: Preco) => {
+    setPrecoToDelete(preco)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!precoToDelete) return
+    
     try {
-      setPrecos(prev => prev.filter(preco => preco.id !== id))
-      toast.success('Preço excluído com sucesso!')
+      const token = localStorage.getItem('token')
+      if (!token) {
+        router.push('/auth')
+        return
+      }
+
+      const response = await apiReq(`http://localhost:3006/api/precos/${precoToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (response && response.status === 200) {
+        setPrecos(prev => prev.filter(preco => preco.id !== precoToDelete.id))
+        toast.success('Preço excluído com sucesso!')
+      } else {
+        toast.error('Erro ao excluir preço')
+      }
     } catch (error) {
+      console.error('Erro ao excluir preço:', error)
       toast.error('Erro ao excluir preço')
+    } finally {
+      setDeleteDialogOpen(false)
+      setPrecoToDelete(null)
     }
   }
 
@@ -211,29 +276,106 @@ export default function PrecosPage() {
         toast.error('Token não encontrado')
         return
       }
-      
-      const response = await apiReq(`http://localhost:3006/api/export/excel`, {
+
+      // Fazer download do arquivo Excel de preços
+      const response = await fetch('http://localhost:3006/api/export/precos', {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${token}`
         }
       })
-      
-      // Criar blob e download
-      const blob = new Blob([response.data], { 
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-      })
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `bpo_financeiro_precos_${new Date().toISOString().split('T')[0]}.xlsx`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-      toast.success('Planilha de preços exportada com sucesso!')
+
+      if (response.ok) {
+        // Obter o blob do arquivo
+        const blob = await response.blob()
+        
+        // Criar URL para o blob
+        const url = window.URL.createObjectURL(blob)
+        
+        // Criar link para download
+        const a = document.createElement('a')
+        a.href = url
+        
+        // Obter nome do arquivo do header ou usar padrão
+        const contentDisposition = response.headers.get('content-disposition')
+        let filename = 'precos.xlsx'
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+          if (filenameMatch) {
+            filename = filenameMatch[1]
+          }
+        }
+        
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        
+        // Limpar
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        
+        toast.success('Excel exportado com sucesso!')
+      } else {
+        toast.error('Erro ao exportar Excel')
+      }
     } catch (error) {
-      toast.error('Erro ao exportar planilha')
+      console.error('Erro ao exportar Excel:', error)
+      toast.error('Erro ao exportar Excel')
+    }
+  }
+
+  const handleExportReport = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('Token não encontrado')
+        return
+      }
+
+      // Fazer download do arquivo Excel completo
+      const response = await fetch('http://localhost:3006/api/export/completo', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        // Obter o blob do arquivo
+        const blob = await response.blob()
+        
+        // Criar URL para o blob
+        const url = window.URL.createObjectURL(blob)
+        
+        // Criar link para download
+        const a = document.createElement('a')
+        a.href = url
+        
+        // Obter nome do arquivo do header ou usar padrão
+        const contentDisposition = response.headers.get('content-disposition')
+        let filename = 'bpo_financeiro_completo.xlsx'
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+          if (filenameMatch) {
+            filename = filenameMatch[1]
+          }
+        }
+        
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        
+        // Limpar
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        
+        toast.success('Relatório exportado com sucesso!')
+      } else {
+        toast.error('Erro ao exportar relatório')
+      }
+    } catch (error) {
+      console.error('Erro ao exportar relatório:', error)
+      toast.error('Erro ao exportar relatório')
     }
   }
 
@@ -295,7 +437,7 @@ export default function PrecosPage() {
             <Download className="w-4 h-4 mr-2" />
             Exportar Tudo
           </button>
-          <button className="account-btn-secondary">
+          <button className="account-btn-secondary" onClick={handleExportReport}>
             <Target className="w-4 h-4 mr-2" />
             Exportar Análise
           </button>
@@ -384,13 +526,13 @@ export default function PrecosPage() {
                     />
                   </div>
                   <div className="space-y-2 col-span-2">
-                    <Label className="account-label">Manutenção Anual (R$)</Label>
+                    <Label className="account-label">Manutenção Atual (R$)</Label>
                     <Input
                       className="account-input"
                       type="number"
                       step="0.01"
-                      value={formData.manutencaoAnual}
-                      onChange={(e) => setFormData(prev => ({ ...prev, manutencaoAnual: e.target.value }))}
+                      value={formData.manutencaoAtual}
+                      onChange={(e) => setFormData(prev => ({ ...prev, manutencaoAtual: e.target.value }))}
                       placeholder="0,00"
                       required
                     />
@@ -414,7 +556,7 @@ export default function PrecosPage() {
                         depreciacaoMeses: '', 
                         precoAtualMensal: '', 
                         margem: '', 
-                        manutencaoAnual: '' 
+                        manutencaoAtual: '' 
                       })
                     }}
                   >
@@ -574,7 +716,7 @@ export default function PrecosPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDelete(preco.id)}
+                          onClick={() => handleDelete(preco)}
                           className="text-gray-500 hover:text-red-600 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -666,6 +808,15 @@ export default function PrecosPage() {
           </div>
         </div>
       </div>
+
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        description={`Tem certeza que deseja excluir o preço do equipamento "${precoToDelete?.equipamento}"?`}
+        onConfirm={confirmDelete}
+      />
+      
+      <Toast />
     </div>
   )
 }

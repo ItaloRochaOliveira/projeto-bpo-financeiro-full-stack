@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -91,13 +92,20 @@ public class FaturamentoService {
         FaturamentoResponse response = new FaturamentoResponse();
         response.setId(faturamento.getId());
         response.setEquipamento(faturamento.getEquipamento());
+        response.setTotalEquipamento(faturamento.getTotalEquipamento());
         response.setMediaAlugados(faturamento.getMediaAlugados());
         
         // Calcular porcentagem: média alugada / total equipamento
         BigDecimal porcentagem = faturamento.getTotalEquipamento().compareTo(BigDecimal.ZERO) > 0
-            ? faturamento.getMediaAlugados().divide(faturamento.getTotalEquipamento(), 4, BigDecimal.ROUND_HALF_UP)
+            ? faturamento.getMediaAlugados().divide(faturamento.getTotalEquipamento(), 4, RoundingMode.HALF_UP)
             : BigDecimal.ZERO;
         response.setPorcentagem(porcentagem);
+        
+        // Adicionar informações do preço se existir
+        if (faturamento.getPreco() != null) {
+            response.setPrecoId(faturamento.getPreco().getId());
+            response.setPrecoEquipamento(faturamento.getPreco().getEquipamento());
+        }
         
         return response;
     }

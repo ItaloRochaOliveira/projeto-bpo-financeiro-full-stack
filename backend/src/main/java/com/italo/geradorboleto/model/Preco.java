@@ -39,9 +39,6 @@ public class Preco {
     @Column(name = "manutencao_atual", nullable = false, precision = 10, scale = 2)
     private BigDecimal manutencaoAtual;
     
-    @Column(name = "faturamento_id", nullable = false, length = 36)
-    private String faturamentoId;
-    
     @Column(name = "created_at", updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -58,8 +55,4 @@ public class Preco {
     
     @Column(name = "user_id", nullable = false, length = 36)
     private String userId;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "faturamento_id", referencedColumnName = "id", insertable = false, updatable = false)
-    private Faturamento faturamento;
 }

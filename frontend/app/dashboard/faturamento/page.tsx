@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { Toast } from '@/components/ui/toast'
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog'
 import { 
   Calculator, 
   Plus, 
@@ -13,7 +15,8 @@ import {
   Download,
   Filter,
   BarChart3,
-  Activity
+  Activity,
+  Package
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -21,6 +24,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { apiReq } from '@/utils/ApiReq'
 
 interface Faturamento {
@@ -28,18 +32,36 @@ interface Faturamento {
   equipamento: string
   mediaAlugados: number
   porcentagem: number
+  totalEquipamento: number
+  precoId?: string
+  precoEquipamento?: string
+}
+
+interface Preco {
+  id: string
+  equipamento: string
+  investimento: number
+  residual: number
+  depreciacaoMeses: number
+  precoAtualMensal: number
+  margem: number
+  manutencaoAnual: number
 }
 
 export default function FaturamentoPage() {
   const router = useRouter()
   const [faturamentos, setFaturamentos] = useState<Faturamento[]>([])
+  const [precos, setPrecos] = useState<Preco[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingFaturamento, setEditingFaturamento] = useState<Faturamento | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [faturamentoToDelete, setFaturamentoToDelete] = useState<Faturamento | null>(null)
   const [formData, setFormData] = useState({
     equipamento: '',
     mediaAlugados: '',
-    totalEquipamento: ''
+    totalEquipamento: '',
+    precoId: ''
   })
 
   useEffect(() => {
@@ -51,6 +73,7 @@ export default function FaturamentoPage() {
     }
 
     loadFaturamentos()
+    loadPrecos()
   }, [])
 
   const loadFaturamentos = async () => {
@@ -70,6 +93,7 @@ export default function FaturamentoPage() {
       
       if (response && response.status === 200) {
         const data = response.data
+        console.log('Dados recebidos da API de faturamento:', data)
         setFaturamentos(data || [])
       } else {
         setFaturamentos([])
@@ -82,62 +106,164 @@ export default function FaturamentoPage() {
     }
   }
 
+  const loadPrecos = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        return
+      }
+      
+      const response = await apiReq(`http://localhost:3006/api/precos`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      
+      if (response && response.status === 200) {
+        const data = response.data
+        setPrecos(data || [])
+      } else {
+        setPrecos([])
+      }
+    } catch (error) {
+      console.error('Erro ao carregar preços:', error)
+      setPrecos([])
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.equipamento || !formData.mediaAlugados || !formData.totalEquipamento) {
-      toast.error('Preencha todos os campos')
+    if (!formData.equipamento || !formData.mediaAlugados || !formData.totalEquipamento || !formData.precoId) {
+      toast.error('Preencha todos os campos, incluindo a seleção de preço')
       return
     }
 
     try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('Token não encontrado')
+        return
+      }
+
       if (editingFaturamento) {
-        setFaturamentos(prev => prev.map(fat => 
-          fat.id === editingFaturamento.id 
-            ? { 
-                ...fat, 
-                equipamento: formData.equipamento, 
-                mediaAlugados: parseFloat(formData.mediaAlugados),
-                porcentagem: (parseFloat(formData.mediaAlugados) / parseFloat(formData.totalEquipamento)) * 100
-              }
-            : fat
-        ))
-        toast.success('Faturamento atualizado com sucesso!')
-      } else {
-        const newFaturamento: Faturamento = {
-          id: Date.now().toString(),
-          equipamento: formData.equipamento,
-          mediaAlugados: parseFloat(formData.mediaAlugados),
-          porcentagem: (parseFloat(formData.mediaAlugados) / parseFloat(formData.totalEquipamento)) * 100
+        // Atualizar via API PUT
+        const response = await apiReq(`http://localhost:3006/api/faturamento/${editingFaturamento.id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          data: JSON.stringify({
+            equipamento: formData.equipamento,
+            mediaAlugados: parseFloat(formData.mediaAlugados),
+            totalEquipamento: parseFloat(formData.totalEquipamento),
+            precoId: formData.precoId
+          })
+        })
+
+        if (response && response.status === 200) {
+          toast.success('Faturamento atualizado com sucesso!')
+          await loadFaturamentos() // Recarregar dados
+        } else {
+          toast.error('Erro ao atualizar faturamento')
         }
-        setFaturamentos(prev => [...prev, newFaturamento])
-        toast.success('Faturamento adicionado com sucesso!')
+      } else {
+        // Criar via API POST
+        const response = await apiReq('http://localhost:3006/api/faturamento', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          data: JSON.stringify({
+            equipamento: formData.equipamento,
+            mediaAlugados: parseFloat(formData.mediaAlugados),
+            totalEquipamento: parseFloat(formData.totalEquipamento),
+            precoId: formData.precoId
+          })
+        })
+
+        if (response && response.status === 200) {
+          toast.success('Faturamento adicionado com sucesso!')
+          await loadFaturamentos() // Recarregar dados
+        } else {
+          toast.error('Erro ao adicionar faturamento')
+        }
       }
       
       setDialogOpen(false)
       setEditingFaturamento(null)
-      setFormData({ equipamento: '', mediaAlugados: '', totalEquipamento: '' })
+      setFormData({ equipamento: '', mediaAlugados: '', totalEquipamento: '', precoId: '' })
     } catch (error) {
+      console.error('Erro ao salvar faturamento:', error)
       toast.error('Erro ao salvar faturamento')
     }
   }
 
   const handleEdit = (faturamento: Faturamento) => {
+    console.log('Editando faturamento:', faturamento)
     setEditingFaturamento(faturamento)
     setFormData({
-      equipamento: faturamento.equipamento,
-      mediaAlugados: faturamento.mediaAlugados.toString(),
-      totalEquipamento: (faturamento.mediaAlugados / (faturamento.porcentagem / 100)).toString()
+      equipamento: faturamento.equipamento || '',
+      mediaAlugados: (faturamento.mediaAlugados || 0).toString(),
+      totalEquipamento: (faturamento.totalEquipamento || 0).toString(),
+      precoId: faturamento.precoId || ''
     })
     setDialogOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
+  const handleCreatePreco = () => {
+    // Redirecionar para página de preços com parâmetro para abrir formulário
+    router.push('/dashboard/precos?new=true&returnToFaturamento=true')
+  }
+
+  // Verificar se o usuário voltou da página de preços e recarregar a lista
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('returnToFaturamento') === 'true') {
+      loadPrecos()
+      // Limpar o parâmetro da URL
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+    }
+  }, [])
+
+  const handleDelete = (faturamento: Faturamento) => {
+    setFaturamentoToDelete(faturamento)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!faturamentoToDelete) return
+    
     try {
-      setFaturamentos(prev => prev.filter(fat => fat.id !== id))
-      toast.success('Faturamento excluído com sucesso!')
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('Token não encontrado')
+        return
+      }
+
+      const response = await apiReq(`http://localhost:3006/api/faturamento/${faturamentoToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response && response.status === 200) {
+        toast.success('Faturamento excluído com sucesso!')
+        await loadFaturamentos() // Recarregar dados
+      } else {
+        toast.error('Erro ao excluir faturamento')
+      }
     } catch (error) {
+      console.error('Erro ao excluir faturamento:', error)
       toast.error('Erro ao excluir faturamento')
+    } finally {
+      setDeleteDialogOpen(false)
+      setFaturamentoToDelete(null)
     }
   }
 
@@ -148,37 +274,118 @@ export default function FaturamentoPage() {
         toast.error('Token não encontrado')
         return
       }
-      
-      const response = await apiReq(`http://localhost:3006/api/export/excel`, {
+
+      // Fazer download do arquivo Excel de faturamento
+      const response = await apiReq('http://localhost:3006/api/export/faturamento', {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${token}`
         }
       })
-      
-      // Criar blob e download
-      if(response && response.status === 200) {
-        const blob = new Blob([response.data], { 
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-        })
+
+      if (response && response.status === 200) {
+        // Obter o blob do arquivo
+        const blob = await response.data
+        
+        // Criar URL para o blob
         const url = window.URL.createObjectURL(blob)
+        
+        // Criar link para download
         const a = document.createElement('a')
         a.href = url
-        a.download = `bpo_financeiro_${new Date().toISOString().split('T')[0]}.xlsx`
+        
+        // Obter nome do arquivo do header ou usar padrão
+        const contentDisposition = response.headers.get('content-disposition')
+        let filename = 'faturamento.xlsx'
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1]
+          }
+        }
+        
+        a.download = filename
         document.body.appendChild(a)
         a.click()
+        
+        // Limpar
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
-        toast.success('Planilha completa exportada com sucesso!')
+        
+        toast.success('Excel exportado com sucesso!')
+      } else {
+        toast.error('Erro ao exportar Excel')
       }
     } catch (error) {
-      toast.error('Erro ao exportar planilha')
+      console.error('Erro ao exportar Excel:', error)
+      toast.error('Erro ao exportar Excel')
+    }
+  }
+
+  const handleExportReport = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('Token não encontrado')
+        return
+      }
+
+      // Fazer download do arquivo Excel completo
+      const response = await apiReq('http://localhost:3006/api/export/completo', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response) {
+        // Obter o blob do arquivo
+        const blob = await response.data
+        
+        // Criar URL para o blob
+        const url = window.URL.createObjectURL(blob)
+        
+        // Criar link para download
+        const a = document.createElement('a')
+        a.href = url
+        
+        // Obter nome do arquivo do header ou usar padrão
+        const contentDisposition = response.headers.get('content-disposition')
+        let filename = 'bpo_financeiro_completo.xlsx'
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1]
+          }
+        }
+        
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        
+        // Limpar
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        
+        toast.success('Relatório exportado com sucesso!')
+      } else {
+        toast.error('Erro ao exportar relatório')
+      }
+    } catch (error) {
+      console.error('Erro ao exportar relatório:', error)
+      toast.error('Erro ao exportar relatório')
     }
   }
 
   const totalEquipamentos = faturamentos.length
   const totalAlugados = faturamentos.reduce((sum, fat) => sum + fat.mediaAlugados, 0)
   const taxaOcupacaoMedia = totalEquipamentos > 0 ? (totalAlugados / (totalEquipamentos * 20)) * 100 : 0
+  const taxaOcupacaoTotal = faturamentos.length > 0 
+    ? faturamentos.reduce((sum, fat) => {
+      const taxa = fat.mediaAlugados / fat.totalEquipamento
+      return sum + taxa
+    }, 0) / faturamentos.length * 100
+    : 0
 
   if (isLoading) {
     return (
@@ -222,7 +429,7 @@ export default function FaturamentoPage() {
             <Download className="w-4 h-4 mr-2" />
             Exportar Tudo
           </button>
-          <button className="account-btn-secondary">
+          <button className="account-btn-secondary" onClick={handleExportReport}>
             <BarChart3 className="w-4 h-4 mr-2" />
             Exportar Relatório
           </button>
@@ -274,6 +481,46 @@ export default function FaturamentoPage() {
                     required
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label className="account-label">Preço do Equipamento</Label>
+                  <div className="flex gap-2">
+                    <Select
+                      value={formData.precoId}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, precoId: value }))}
+                      required
+                    >
+                      <SelectTrigger className="account-input flex-1">
+                        <SelectValue placeholder="Selecione um preço" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {precos.length === 0 ? (
+                          <SelectItem value="" disabled>
+                            Nenhum preço cadastrado
+                          </SelectItem>
+                        ) : (
+                          precos.map((preco) => (
+                            <SelectItem key={preco.id} value={preco.id}>
+                              {preco.equipamento} - R$ {preco.precoAtualMensal.toFixed(2)}/mês
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      onClick={handleCreatePreco}
+                      className="account-btn-primary px-3"
+                      title="Criar novo preço"
+                    >
+                      <Package className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {precos.length === 0 && (
+                    <p className="text-sm text-amber-600">
+                      Nenhum preço cadastrado. Clique no botão + para adicionar um preço.
+                    </p>
+                  )}
+                </div>
                 <div className="flex gap-3 pt-4">
                   <Button type="submit" className="account-btn-primary flex-1">
                     {editingFaturamento ? 'Atualizar' : 'Adicionar'}
@@ -285,7 +532,7 @@ export default function FaturamentoPage() {
                     onClick={() => {
                       setDialogOpen(false)
                       setEditingFaturamento(null)
-                      setFormData({ equipamento: '', mediaAlugados: '', totalEquipamento: '' })
+                      setFormData({ equipamento: '', mediaAlugados: '', totalEquipamento: '', precoId: '' })
                     }}
                   >
                     Cancelar
@@ -340,12 +587,12 @@ export default function FaturamentoPage() {
               <span className="text-xs font-bold">%</span>
             </div>
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">Taxa de Ocupação</h3>
+          <h3 className="text-lg font-semibold text-white mb-2">Taxa de Ocupação Total</h3>
           <p className="text-3xl font-bold text-white mb-2">
-            {taxaOcupacaoMedia.toFixed(1)}%
+            {taxaOcupacaoTotal.toFixed(1)}%
           </p>
           <p className="text-white/80 text-sm">
-            Média geral
+            Soma das taxas de ocupação
           </p>
         </div>
       </div>
@@ -374,7 +621,9 @@ export default function FaturamentoPage() {
                 </tr>
               </thead>
               <tbody>
-                {faturamentos.map((faturamento) => (
+                {faturamentos.map((faturamento) => {
+                  const porcentagem = faturamento.porcentagem * 100;
+                  return (
                   <tr key={faturamento.id}>
                     <td className="font-medium text-gray-900">{faturamento.equipamento}</td>
                     <td className="font-medium text-gray-900">{faturamento.mediaAlugados}</td>
@@ -383,28 +632,28 @@ export default function FaturamentoPage() {
                         <div className="flex-1 max-w-24 bg-gray-200 rounded-full h-2">
                           <div 
                             className={`h-2 rounded-full transition-all duration-300 ${
-                              faturamento.porcentagem >= 70 ? 'bg-green-500' :
-                              faturamento.porcentagem >= 40 ? 'bg-yellow-500' :
+                              porcentagem >= 70 ? 'bg-green-500' :
+                              porcentagem >= 40 ? 'bg-yellow-500' :
                               'bg-red-500'
                             }`} 
-                            style={{ width: `${faturamento.porcentagem}%` }}
+                            style={{ width: `${porcentagem}%` }}
                           ></div>
                         </div>
                         <span className="text-sm font-medium text-gray-700 min-w-[50px]">
-                          {faturamento.porcentagem.toFixed(1)}%
+                          {porcentagem.toFixed(1)}%
                         </span>
                       </div>
                     </td>
                     <td>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        faturamento.porcentagem >= 70 
+                        porcentagem >= 70 
                           ? 'bg-green-100 text-green-800 border border-green-200' 
-                          : faturamento.porcentagem >= 40
+                          : porcentagem >= 40
                           ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
                           : 'bg-red-100 text-red-800 border border-red-200'
                       }`}>
-                        {faturamento.porcentagem >= 70 ? 'Alta' : 
-                         faturamento.porcentagem >= 40 ? 'Média' : 'Baixa'}
+                        {porcentagem >= 70 ? 'Alta' : 
+                         porcentagem >= 40 ? 'Média' : 'Baixa'}
                       </span>
                     </td>
                     <td className="text-right">
@@ -420,7 +669,7 @@ export default function FaturamentoPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDelete(faturamento.id)}
+                          onClick={() => handleDelete(faturamento)}
                           className="text-gray-500 hover:text-red-600 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -428,7 +677,7 @@ export default function FaturamentoPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>
@@ -445,10 +694,11 @@ export default function FaturamentoPage() {
           </div>
           <div className="account-card-content">
             <div className="space-y-4">
-              {[
-                { name: 'Alta Ocupação (70%+)', count: faturamentos.filter(f => f.porcentagem >= 70).length, color: 'bg-green-500' },
-                { name: 'Média Ocupação (40-70%)', count: faturamentos.filter(f => f.porcentagem >= 40 && f.porcentagem < 70).length, color: 'bg-yellow-500' },
-                { name: 'Baixa Ocupação (<40%)', count: faturamentos.filter(f => f.porcentagem < 40).length, color: 'bg-red-500' }
+              {
+              [
+                { name: 'Alta Ocupação (70%+)', count: faturamentos.filter(f => f.porcentagem * 100 >= 70).length, color: 'bg-green-500' },
+                { name: 'Média Ocupação (40-70%)', count: faturamentos.filter(f => f.porcentagem * 100 >= 40 && f.porcentagem * 100 < 70).length, color: 'bg-yellow-500' },
+                { name: 'Baixa Ocupação (<40%)', count: faturamentos.filter(f => f.porcentagem * 100 < 40).length, color: 'bg-red-500' }
               ].map((category, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -470,12 +720,12 @@ export default function FaturamentoPage() {
           </div>
           <div className="account-card-content">
             <div className="space-y-3">
-              {faturamentos.filter(f => f.porcentagem < 40).length > 0 && (
+              {faturamentos.filter(f => f.porcentagem * 100 < 40).length > 0 && (
                 <div className="flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
                   <div className="w-2 h-2 bg-red-500 rounded-full mt-1.5"></div>
                   <div>
                     <p className="text-sm font-medium text-red-800">
-                      {faturamentos.filter(f => f.porcentagem < 40).length} equipamentos com baixa ocupação
+                      {faturamentos.filter(f => f.porcentagem * 100 < 40).length} equipamentos com baixa ocupação
                     </p>
                     <p className="text-xs text-red-600 mt-1">
                       Considere revisar preços ou estratégias de marketing
@@ -483,12 +733,12 @@ export default function FaturamentoPage() {
                   </div>
                 </div>
               )}
-              {faturamentos.filter(f => f.porcentagem >= 70).length > 0 && (
+              {faturamentos.filter(f => f.porcentagem * 100 >= 70).length > 0 && (
                 <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
                   <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5"></div>
                   <div>
                     <p className="text-sm font-medium text-green-800">
-                      {faturamentos.filter(f => f.porcentagem >= 70).length} equipamentos com alta performance
+                      {faturamentos.filter(f => f.porcentagem * 100 >= 70).length} equipamentos com alta performance
                     </p>
                     <p className="text-xs text-green-600 mt-1">
                       Ótimo desempenho, mantenha a estratégia atual
@@ -500,11 +750,12 @@ export default function FaturamentoPage() {
                 <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
                 <div>
                   <p className="text-sm font-medium text-blue-800">
-                    Taxa média de ocupação: {taxaOcupacaoMedia.toFixed(1)}%
+                    Taxa total de ocupação: {taxaOcupacaoTotal.toFixed(1)}%
                   </p>
                   <p className="text-xs text-blue-600 mt-1">
-                    {taxaOcupacaoMedia >= 60 ? 'Bom desempenho geral' : 
-                     taxaOcupacaoMedia >= 40 ? 'Desempenho moderado' : 
+                    {taxaOcupacaoTotal >= 150 ? 'Excelente desempenho geral' : 
+                     taxaOcupacaoTotal >= 100 ? 'Bom desempenho geral' : 
+                     taxaOcupacaoTotal >= 50 ? 'Desempenho moderado' : 
                      'Revisar estratégias gerais'}
                   </p>
                 </div>
@@ -513,6 +764,15 @@ export default function FaturamentoPage() {
           </div>
         </div>
       </div>
+
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        description={`Tem certeza que deseja excluir o equipamento "${faturamentoToDelete?.equipamento}"?`}
+        onConfirm={confirmDelete}
+      />
+      
+      <Toast />
     </div>
   )
 }

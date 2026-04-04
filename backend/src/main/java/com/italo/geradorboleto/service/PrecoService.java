@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -25,12 +26,6 @@ public class PrecoService {
     private final FaturamentoRepository faturamentoRepository;
     
     public PrecoResponse createPreco(PrecoRequest request, String userId) {
-        // Verificar se o faturamento existe e pertence ao usuário
-        if (request.getFaturamentoId() != null) {
-            Faturamento faturamento = faturamentoRepository.findByIdAndDeletedFalse(request.getFaturamentoId(), userId)
-                .orElseThrow(() -> new RuntimeException("Faturamento não encontrado"));
-        }
-        
         Preco preco = new Preco();
         preco.setEquipamento(request.getEquipamento());
         preco.setInvestimento(request.getInvestimento());
@@ -39,7 +34,6 @@ public class PrecoService {
         preco.setPrecoAtualMensal(request.getPrecoAtualMensal());
         preco.setMargem(request.getMargem());
         preco.setManutencaoAtual(request.getManutencaoAtual());
-        preco.setFaturamentoId(request.getFaturamentoId());
         preco.setUserId(userId);
         
         Preco savedPreco = precoRepository.save(preco);
@@ -62,13 +56,6 @@ public class PrecoService {
     public PrecoResponse updatePreco(String id, PrecoRequest request, String userId) {
         Preco preco = precoRepository.findByIdAndDeletedFalse(id, userId)
             .orElseThrow(() -> new RuntimeException("Preço não encontrado"));
-        
-        // Verificar se o faturamento existe e pertence ao usuário
-        if (request.getFaturamentoId() != null) {
-            Faturamento faturamento = faturamentoRepository.findByIdAndDeletedFalse(request.getFaturamentoId(), userId)
-                .orElseThrow(() -> new RuntimeException("Faturamento não encontrado"));
-            preco.setFaturamentoId(request.getFaturamentoId());
-        }
         
         preco.setEquipamento(request.getEquipamento());
         preco.setInvestimento(request.getInvestimento());
@@ -127,7 +114,7 @@ public class PrecoService {
         // Buscar dados do faturamento para este equipamento
         Optional<Faturamento> faturamentoOpt = faturamentoRepository.findByUserIdAndDeletedFalse(preco.getUserId())
             .stream()
-            .filter(f -> f.getEquipamento().equals(preco.getEquipamento()))
+            .filter(f -> preco.getEquipamento().equals(f.getEquipamento()))
             .findFirst();
         
         BigDecimal qtde = BigDecimal.ZERO;
@@ -138,7 +125,7 @@ public class PrecoService {
             Faturamento faturamento = faturamentoOpt.get();
             qtde = faturamento.getTotalEquipamento();
             taxaOcupacao = faturamento.getTotalEquipamento().compareTo(BigDecimal.ZERO) > 0
-                ? faturamento.getMediaAlugados().divide(faturamento.getTotalEquipamento(), 4, BigDecimal.ROUND_HALF_UP)
+                ? faturamento.getMediaAlugados().divide(faturamento.getTotalEquipamento(), 4, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
             mediaAlugados = faturamento.getMediaAlugados();
         }
@@ -158,7 +145,7 @@ public class PrecoService {
             .map(p -> {
                 Optional<Faturamento> fatOpt = faturamentoRepository.findByUserIdAndDeletedFalse(preco.getUserId())
                     .stream()
-                    .filter(f -> f.getEquipamento().equals(p.getEquipamento()))
+                    .filter(f -> p.getEquipamento().equals(f.getEquipamento()))
                     .findFirst();
                 BigDecimal media = fatOpt.map(Faturamento::getMediaAlugados).orElse(BigDecimal.ZERO);
                 return p.getInvestimento().subtract(p.getResidual()).multiply(media);
@@ -166,7 +153,7 @@ public class PrecoService {
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         BigDecimal rateio = denominadorRateio.compareTo(BigDecimal.ZERO) > 0
-            ? numeradorRateio.divide(denominadorRateio, 4, BigDecimal.ROUND_HALF_UP)
+            ? numeradorRateio.divide(denominadorRateio, 4, RoundingMode.HALF_UP)
             : BigDecimal.ZERO;
         response.setRateio(rateio);
         
@@ -176,18 +163,18 @@ public class PrecoService {
         response.setCustoRateado(custoRateado);
         
         // Manutenção mensal: manutenção anual / 12
-        BigDecimal manutencaoMensal = preco.getManutencaoAtual().divide(new BigDecimal("12"), 2, BigDecimal.ROUND_HALF_UP);
+        BigDecimal manutencaoMensal = preco.getManutencaoAtual().divide(new BigDecimal("12"), 2, RoundingMode.HALF_UP);
         response.setManutencaoMensal(manutencaoMensal);
         
         // Custo: custo rateado / média alugados
         BigDecimal custo = mediaAlugados.compareTo(BigDecimal.ZERO) > 0
-            ? custoRateado.divide(mediaAlugados, 2, BigDecimal.ROUND_HALF_UP)
+            ? custoRateado.divide(mediaAlugados, 2, RoundingMode.HALF_UP)
             : BigDecimal.ZERO;
         response.setCusto(custo);
         
         // Depreciação: (investimento - residual) / depreciação meses
         BigDecimal depreciacao = preco.getDepreciacaoMeses() > 0
-            ? investimentoMenosResidual.divide(new BigDecimal(preco.getDepreciacaoMeses()), 2, BigDecimal.ROUND_HALF_UP)
+            ? investimentoMenosResidual.divide(new BigDecimal(preco.getDepreciacaoMeses()), 2, RoundingMode.HALF_UP)
             : BigDecimal.ZERO;
         response.setDepreciacao(depreciacao);
         
@@ -221,7 +208,7 @@ public class PrecoService {
         
         // Payback meses: (investimento - residual) * qtde / resultado
         BigDecimal paybackMeses = resultado.compareTo(BigDecimal.ZERO) > 0
-            ? investimentoMenosResidual.multiply(qtde).divide(resultado, 2, BigDecimal.ROUND_HALF_UP)
+            ? investimentoMenosResidual.multiply(qtde).divide(resultado, 2, RoundingMode.HALF_UP)
             : BigDecimal.ZERO;
         response.setPaybackMeses(paybackMeses);
         

@@ -1,6 +1,5 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/dashboard/custos/page": "app/dashboard/custos/page.js",
-  "/dashboard/faturamento/page": "app/dashboard/faturamento/page.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/dashboard/precos/page": "app/dashboard/precos/page.js",
+  "/dashboard/faturamento/page": "app/dashboard/faturamento/page.js"
 }

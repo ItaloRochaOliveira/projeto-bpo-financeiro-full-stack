@@ -37,6 +37,4 @@ public class PrecoRequest {
     @NotNull(message = "Manutenção atual é obrigatória")
     @DecimalMin(value = "0.00", message = "Manutenção atual não pode ser negativa")
     private BigDecimal manutencaoAtual;
-    
-    private String faturamentoId;
 }
