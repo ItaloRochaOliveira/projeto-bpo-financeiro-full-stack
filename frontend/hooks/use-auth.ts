@@ -8,6 +8,8 @@ import { apiReq } from '@/utils/ApiReq'
 
 interface User {
   email: string
+  name: string
+  role: string
 }
 
 interface UseAuthReturn {
@@ -35,7 +37,8 @@ export function useAuth(): UseAuthReturn {
     
     setIsAuthenticated(auth === 'true')
     if (userData) {
-      setUser(JSON.parse(userData))
+      const parsedUser = JSON.parse(userData)
+      setUser(parsedUser)
     }
     setIsLoading(false)
   }
@@ -60,12 +63,24 @@ export function useAuth(): UseAuthReturn {
         // Salvar token e dados do usuário
         localStorage.setItem('token', token)
         localStorage.setItem('isAuthenticated', 'true')
-        localStorage.setItem('user', JSON.stringify({ email: data.email }))
+        localStorage.setItem('user', JSON.stringify({ 
+          email: result.email, 
+          name: result.name,
+          role: result.role 
+        }))
         
-        setUser({ email: data.email })
+        const userData = { email: result.email, name: result.name, role: result.role }
+        setUser(userData)
         setIsAuthenticated(true)
-        toast.success('Login realizado com sucesso!')
-        router.push('/dashboard')
+        
+        // Verificar se é primeiro login
+        if (result.firstLogin) {
+          toast.info('Primeiro acesso detectado! Defina sua senha para continuar.')
+          router.push(`/first-login?token=${token}`)
+        } else {
+          toast.success('Login realizado com sucesso!')
+          router.push('/dashboard')
+        }
       } else {
         let errorMessage = 'Erro ao fazer login'
         
@@ -105,7 +120,7 @@ export function useAuth(): UseAuthReturn {
       setIsLoading(true)
       // Simulação de signup - substituir com API real
       if (data.email && data.password) {
-        const userData = { email: data.email }
+        const userData = { email: data.email, name: '', role: 'USER' }
         localStorage.setItem('isAuthenticated', 'true')
         localStorage.setItem('user', JSON.stringify(userData))
         setUser(userData)

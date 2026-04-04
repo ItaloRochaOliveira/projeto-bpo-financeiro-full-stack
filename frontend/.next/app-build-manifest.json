@@ -1,9 +1,9 @@
 {
   "pages": {
-    "/dashboard/precos/page": [
+    "/dashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/precos/page.js"
+      "static/chunks/app/dashboard/page.js"
     ],
     "/dashboard/layout": [
       "static/chunks/webpack.js",
@@ -16,10 +16,25 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
+    "/dashboard/custos/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/custos/page.js"
+    ],
     "/dashboard/faturamento/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/faturamento/page.js"
+    ],
+    "/dashboard/precos/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/precos/page.js"
+    ],
+    "/auth/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/auth/page.js"
     ],
     "/_not-found/page": [
       "static/chunks/webpack.js",

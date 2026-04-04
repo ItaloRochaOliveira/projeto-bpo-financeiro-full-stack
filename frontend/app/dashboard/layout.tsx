@@ -148,7 +148,9 @@ export default function DashboardLayout({
             <div className="flex items-center gap-x-4">
               <div className="hidden sm:block text-right">
                 <p className="text-sm font-medium text-gray-900">{user?.email}</p>
-                <p className="text-xs text-gray-500">Administrador</p>
+                <p className="text-xs text-gray-500">
+                  {user?.role === 'ADMIN' ? 'Administrador' : user?.role === 'USER' ? 'Usuário' : user?.role}
+                </p>
               </div>
               <Button
                 variant="ghost"

@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { apiReq } from '@/utils/ApiReq'
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog'
 
 interface Custo {
   id: string
@@ -49,6 +50,7 @@ export default function CustosPage() {
   const [editingCusto, setEditingCusto] = useState<Custo | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [custoToDelete, setCustoToDelete] = useState<Custo | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [formData, setFormData] = useState({
     descricao: '',
     valor: '',
@@ -228,6 +230,8 @@ export default function CustosPage() {
   const confirmDelete = async () => {
     if (!custoToDelete) return
     
+    setIsDeleting(true)
+    
     try {
       const token = localStorage.getItem('token')
       if (!token) {
@@ -252,6 +256,7 @@ export default function CustosPage() {
       console.error('Erro ao excluir custo:', error)
       toast.error('Erro ao excluir custo')
     } finally {
+      setIsDeleting(false)
       setDeleteDialogOpen(false)
       setCustoToDelete(null)
     }
@@ -606,44 +611,14 @@ export default function CustosPage() {
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="account-card border-0 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-gray-900">
-              Confirmar Exclusão
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-gray-600">
-              Tem certeza que deseja excluir o custo <strong>"{custoToDelete?.descricao}"</strong> no valor de 
-              <br />
-              <strong>R$ {custoToDelete?.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>?
-            </p>
-            <p className="text-red-600 text-sm font-medium">
-              ⚠️ Esta ação não pode ser desfeita.
-            </p>
-          </div>
-          <div className="flex gap-3 pt-4">
-            <Button 
-              variant="outline" 
-              className="account-btn-secondary flex-1"
-              onClick={() => {
-                setDeleteDialogOpen(false)
-                setCustoToDelete(null)
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              className="account-btn-primary bg-red-600 hover:bg-red-700 flex-1"
-              onClick={confirmDelete}
-            >
-              Excluir
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Confirmar Exclusão"
+        description={`Tem certeza que deseja excluir o custo "${custoToDelete?.descricao}" no valor de R$ ${custoToDelete?.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}?`}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

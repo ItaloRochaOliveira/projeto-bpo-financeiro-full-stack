@@ -685,7 +685,7 @@ export default function PrecosPage() {
                         </span>
                       </div>
                     </td>
-                    <td>{formatPercentage(preco.margem)}</td>
+                    <td>{formatPercentage(Number(preco.margem) / 100)}</td>
                     <td>
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-gray-500" />

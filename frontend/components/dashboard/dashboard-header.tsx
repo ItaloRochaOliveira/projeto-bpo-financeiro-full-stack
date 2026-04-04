@@ -2,12 +2,23 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { FileText, Menu, X } from 'lucide-react'
+import { FileText, Menu, X, Shield } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 
 export function DashboardHeader() {
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  const getRoleDisplay = (role: string) => {
+    switch (role) {
+      case 'ADMIN':
+        return 'Administrador'
+      case 'USER':
+        return 'Usuário'
+      default:
+        return role
+    }
+  }
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -22,7 +33,15 @@ export function DashboardHeader() {
           </div>
           
           {/* Desktop Menu */}
-          <div className="hidden sm:block">
+          <div className="hidden sm:flex items-center gap-4">
+            {user && (
+              <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-lg">
+                <Shield className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">
+                  {getRoleDisplay(user.role)}
+                </span>
+              </div>
+            )}
             <Button variant="outline" onClick={logout}>
               Sair
             </Button>
@@ -48,7 +67,17 @@ export function DashboardHeader() {
                 <div className="w-8 h-8 bg-medical-blue rounded-lg flex items-center justify-center">
                   <FileText className="w-5 h-5 text-white" />
                 </div>
-                <h1 className="text-xl font-bold text-gray-900">PDF Generator Medical</h1>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">PDF Generator Medical</h1>
+                  {user && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <Shield className="w-3 h-3 text-gray-600" />
+                      <span className="text-xs text-gray-600">
+                        {getRoleDisplay(user.role)}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
               <Button 
                 variant="outline" 

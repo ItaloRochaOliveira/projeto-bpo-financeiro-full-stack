@@ -20,6 +20,8 @@ import {
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { apiReq } from '@/utils/ApiReq'
+import { useDashboardCharts } from '@/hooks/use-dashboard-charts'
+import { EvolucaoMensalChart, DistribuicaoCustosChart } from '@/components/dashboard/dashboard-charts'
 
 interface DashboardStats {
   totalCustos: number
@@ -30,6 +32,7 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const router = useRouter()
+  const { chartData, isLoading: chartsLoading } = useDashboardCharts()
   const [stats, setStats] = useState<DashboardStats>({
     totalCustos: 0,
     totalFaturamento: 0,
@@ -175,7 +178,7 @@ export default function DashboardPage() {
         }
 
         // Calcular margem de lucro
-        const margemLucro = totalFaturamento > 0 ? ((totalFaturamento - totalCustos) / totalFaturamento) * 100 : 0
+        const margemLucro = parseFloat((totalFaturamento > 0 ? ((totalFaturamento - totalCustos) / totalFaturamento) * 100 : 0).toFixed(2))
 
         setStats({
           totalCustos,
@@ -337,13 +340,10 @@ export default function DashboardPage() {
             </CardTitle>
           </div>
           <div className="account-card-content">
-            <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-              <div className="text-center text-gray-500">
-                <BarChart3 className="w-8 h-8 mx-auto mb-2" />
-                <p>Gráfico de evolução mensal</p>
-                <p className="text-sm">Em desenvolvimento</p>
-              </div>
-            </div>
+            <EvolucaoMensalChart 
+              data={chartData.evolucaoMensal} 
+              isLoading={chartsLoading}
+            />
           </div>
         </div>
 
@@ -354,13 +354,10 @@ export default function DashboardPage() {
             </CardTitle>
           </div>
           <div className="account-card-content">
-            <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-              <div className="text-center text-gray-500">
-                <PieChart className="w-8 h-8 mx-auto mb-2" />
-                <p>Gráfico de distribuição</p>
-                <p className="text-sm">Em desenvolvimento</p>
-              </div>
-            </div>
+            <DistribuicaoCustosChart 
+              data={chartData.distribuicaoCustos} 
+              isLoading={chartsLoading}
+            />
           </div>
         </div>
       </div>

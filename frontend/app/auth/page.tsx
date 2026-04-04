@@ -1,13 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Calculator, TrendingUp, BarChart3, Shield } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { AuthForm } from '@/components/forms/auth-form'
 
 export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true)
   const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
 
@@ -100,20 +98,14 @@ export default function AuthPage() {
               <h1 className="text-3xl font-bold text-account-primary">Sistema Financeiro</h1>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {isLogin ? 'Bem-vindo de volta!' : 'Criar nova conta'}
+              Bem-vindo de volta!
             </h2>
             <p className="text-gray-600">
-              {isLogin 
-                ? 'Faça login para acessar seu painel financeiro' 
-                : 'Cadastre-se para começar a gerenciar suas finanças'
-              }
+              Faça login para acessar seu painel financeiro
             </p>
           </div>
 
-          <AuthForm
-            isLogin={isLogin}
-            onToggle={() => setIsLogin(!isLogin)}
-          />
+          <AuthForm />
 
           <div className="mt-8 text-center">
             <div className="flex items-center justify-center gap-4 text-sm text-gray-500">

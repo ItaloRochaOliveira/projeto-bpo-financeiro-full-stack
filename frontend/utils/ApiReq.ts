@@ -47,7 +47,11 @@ export async function apiReq(url: string, config: AxiosRequestConfig = {}) {
     }
     
     // Mostrar toast com mensagem de erro amigável
-    if (error.response?.status === 403) {
+    if (error.response?.status === 400) {
+      // Para erro 400, mostrar a mensagem específica do backend
+      const errorMessage = error.response?.data || 'Dados inválidos. Verifique as informações.';
+      toast.error(errorMessage);
+    } else if (error.response?.status === 403) {
       toast.error('Acesso negado. Verifique suas permissões.');
     } else if (error.response?.status === 404) {
       toast.error('Recurso não encontrado.');
