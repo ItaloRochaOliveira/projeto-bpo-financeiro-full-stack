@@ -1,0 +1,32 @@
+# Exemplo de arquivo de configuração properties
+# Copie este arquivo para "properties" e ajuste os valores conforme necessário
+
+# Configurações do Banco de Dados
+database.host=localhost
+database.port=5432
+database.name=projeto_financeiro
+database.username=seu_usuario
+database.password=sua_senha
+
+# Configurações da Aplicação
+app.name=Sistema Financeiro BPO
+app.version=1.0.0
+app.environment=development
+
+# Configurações de Email
+email.host=smtp.gmail.com
+email.port=587
+email.username=seu_email@gmail.com
+email.password=sua_app_password
+
+# Configurações do JWT
+jwt.secret=seu_jwt_secret_super_secreto_aqui
+jwt.expiration=86400000
+
+# Configurações de Upload
+upload.maxFileSize=10MB
+upload.allowedTypes=pdf,doc,docx,xls,xlsx
+
+# Configurações de Logging
+log.level=INFO
+log.file.path=logs/application.log
