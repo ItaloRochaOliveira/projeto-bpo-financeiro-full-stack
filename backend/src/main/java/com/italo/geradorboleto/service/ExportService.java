@@ -147,58 +147,78 @@ public class ExportService {
         double percVariaveis = totalGeral > 0 ? (totalVariaveis / totalGeral) * 100 : 0;
         
         // Estilos
-        CellStyle headerStyle = createHeaderStyle(sheet.getWorkbook(), IndexedColors.DARK_BLUE);
         CellStyle titleStyle = createTitleStyle(sheet.getWorkbook());
-        CellStyle currencyStyle = createCurrencyStyle(sheet.getWorkbook());
+        CellStyle cardFixoStyle = createCardStyle(sheet.getWorkbook(), IndexedColors.DARK_BLUE);
+        CellStyle cardVariavelStyle = createCardStyle(sheet.getWorkbook(), IndexedColors.GREEN);
+        CellStyle cardTotalStyle = createCardStyle(sheet.getWorkbook(), IndexedColors.GREY_50_PERCENT);
+        CellStyle currencyCardStyle = createCurrencyCardStyle(sheet.getWorkbook());
+        CellStyle percentCardStyle = createPercentCardStyle(sheet.getWorkbook());
         
-        // Título "Resumo"
+        // Título "Resumo de Custos" (similar aos cards do front)
         Row titleRow = sheet.createRow(0);
         Cell titleCell = titleRow.createCell(0);
-        titleCell.setCellValue("Resumo");
+        titleCell.setCellValue("Resumo de Custos");
         titleCell.setCellStyle(titleStyle);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
         
-        // Cabeçalho da tabela de resumo
-        Row headerRow = sheet.createRow(1);
-        String[] headers = {"Descrição", "Valor", "Percentual"};
-        for (int i = 0; i < headers.length; i++) {
-            Cell cell = headerRow.createCell(i);
-            cell.setCellValue(headers[i]);
-            cell.setCellStyle(headerStyle);
-        }
+        // Espaço
+        Row spaceRow = sheet.createRow(1);
+        spaceRow.createCell(0).setCellValue("");
         
-        // Linha: Custos Fixos
-        Row fixosRow = sheet.createRow(2);
-        fixosRow.createCell(0).setCellValue("Custos Fixos");
-        fixosRow.createCell(0).setCellStyle(createDataStyle(sheet.getWorkbook()));
-        Cell fixosValorCell = fixosRow.createCell(1);
+        // Layout de Cards (3 lado a lado como no front)
+        int cardRow = 2;
+        
+        // Card 1: Custos Fixos (coluna A)
+        Row fixosRow = sheet.createRow(cardRow);
+        Cell fixosIconCell = fixosRow.createCell(0);
+        fixosIconCell.setCellValue("💰 Custos Fixos");
+        fixosIconCell.setCellStyle(cardFixoStyle);
+        
+        Row fixosValorRow = sheet.createRow(cardRow + 1);
+        Cell fixosValorCell = fixosValorRow.createCell(0);
         fixosValorCell.setCellValue(totalFixos);
-        fixosValorCell.setCellStyle(currencyStyle);
-        Cell fixosPercentCell = fixosRow.createCell(2);
-        fixosPercentCell.setCellValue(String.format("%.1f%%", percFixos));
-        fixosPercentCell.setCellStyle(createPercentStyle(sheet.getWorkbook()));
+        fixosValorCell.setCellStyle(currencyCardStyle);
         
-        // Linha: Custos Variáveis
-        Row variaveisRow = sheet.createRow(3);
-        variaveisRow.createCell(0).setCellValue("Custos Variáveis");
-        variaveisRow.createCell(0).setCellStyle(createDataStyle(sheet.getWorkbook()));
-        Cell variaveisValorCell = variaveisRow.createCell(1);
+        Row fixosPercentRow = sheet.createRow(cardRow + 2);
+        Cell fixosPercentCell = fixosPercentRow.createCell(0);
+        fixosPercentCell.setCellValue(String.format("%.1f%% do total", percFixos));
+        fixosPercentCell.setCellStyle(percentCardStyle);
+        
+        // Card 2: Custos Variáveis (coluna C)
+        Row variaveisRow = sheet.createRow(cardRow);
+        Cell variaveisIconCell = variaveisRow.createCell(2);
+        variaveisIconCell.setCellValue("📈 Custos Variáveis");
+        variaveisIconCell.setCellStyle(cardVariavelStyle);
+        
+        Row variaveisValorRow = sheet.createRow(cardRow + 1);
+        Cell variaveisValorCell = variaveisValorRow.createCell(2);
         variaveisValorCell.setCellValue(totalVariaveis);
-        variaveisValorCell.setCellStyle(currencyStyle);
-        Cell variaveisPercentCell = variaveisRow.createCell(2);
-        variaveisPercentCell.setCellValue(String.format("%.1f%%", percVariaveis));
-        variaveisPercentCell.setCellStyle(createPercentStyle(sheet.getWorkbook()));
+        variaveisValorCell.setCellStyle(currencyCardStyle);
         
-        // Linha: Total
-        Row totalRow = sheet.createRow(4);
-        totalRow.createCell(0).setCellValue("Custos Fixos + Variáveis");
-        totalRow.createCell(0).setCellStyle(createTotalStyle(sheet.getWorkbook()));
-        Cell totalValorCell = totalRow.createCell(1);
+        Row variaveisPercentRow = sheet.createRow(cardRow + 2);
+        Cell variaveisPercentCell = variaveisPercentRow.createCell(2);
+        variaveisPercentCell.setCellValue(String.format("%.1f%% do total", percVariaveis));
+        variaveisPercentCell.setCellStyle(percentCardStyle);
+        
+        // Card 3: Total (coluna E)
+        Row totalRow = sheet.createRow(cardRow);
+        Cell totalIconCell = totalRow.createCell(4);
+        totalIconCell.setCellValue("📊 Total");
+        totalIconCell.setCellStyle(cardTotalStyle);
+        
+        Row totalValorRow = sheet.createRow(cardRow + 1);
+        Cell totalValorCell = totalValorRow.createCell(4);
         totalValorCell.setCellValue(totalGeral);
-        totalValorCell.setCellStyle(createTotalStyle(sheet.getWorkbook()));
-        Cell totalPercentCell = totalRow.createCell(2);
-        totalPercentCell.setCellValue("100.0%");
-        totalPercentCell.setCellStyle(createTotalStyle(sheet.getWorkbook()));
+        totalValorCell.setCellStyle(currencyCardStyle);
+        
+        Row totalPercentRow = sheet.createRow(cardRow + 2);
+        Cell totalPercentCell = totalPercentRow.createCell(4);
+        totalPercentCell.setCellValue("100% do total");
+        totalPercentCell.setCellStyle(percentCardStyle);
+        
+        // Espaço após os cards
+        Row spaceRow2 = sheet.createRow(cardRow + 3);
+        spaceRow2.createCell(0).setCellValue("");
     }
 
     private void createDetalhadosSection(Sheet sheet, List<CustoSimplesResponse> custos) {
@@ -210,20 +230,27 @@ public class ExportService {
             }
         }
         
-        // Espaço antes da tabela detalhada
-        Row spaceRow = sheet.createRow(5);
+        // Espaço antes da tabela detalhada (cards terminam na linha 5)
+        Row spaceRow = sheet.createRow(6);
         spaceRow.createCell(0).setCellValue("");
         
-        // Título "Item"
-        Row titleRow = sheet.createRow(6);
+        // Título "Custos Detalhados" (similar ao front)
+        Row titleRow = sheet.createRow(7);
         Cell titleCell = titleRow.createCell(0);
-        titleCell.setCellValue("Item");
+        titleCell.setCellValue("Custos Detalhados");
         titleCell.setCellStyle(createTitleStyle(sheet.getWorkbook()));
-        sheet.addMergedRegion(new CellRangeAddress(6, 6, 0, 4));
+        sheet.addMergedRegion(new CellRangeAddress(7, 7, 0, 3));
+        
+        // Informação adicional (similar ao front)
+        Row infoRow = sheet.createRow(8);
+        Cell infoCell = infoRow.createCell(0);
+        infoCell.setCellValue(String.format("%d custos cadastrados", custos != null ? custos.size() : 0));
+        infoCell.setCellStyle(createInfoStyle(sheet.getWorkbook()));
+        sheet.addMergedRegion(new CellRangeAddress(8, 8, 0, 3));
         
         // Cabeçalho da tabela detalhada
-        Row headerRow = sheet.createRow(7);
-        String[] headers = {"Descrição", "Valor", "Tipo de Custo", "%"};
+        Row headerRow = sheet.createRow(9);
+        String[] headers = {"Descrição", "Valor", "Tipo", "% do Total"};
         CellStyle headerStyle = createHeaderStyle(sheet.getWorkbook(), IndexedColors.DARK_GREEN);
         
         for (int i = 0; i < headers.length; i++) {
@@ -237,7 +264,9 @@ public class ExportService {
             CellStyle currencyStyle = createCurrencyStyle(sheet.getWorkbook());
             CellStyle dataStyle = createDataStyle(sheet.getWorkbook());
             CellStyle percentStyle = createPercentStyle(sheet.getWorkbook());
-            int rowNum = 8;
+            CellStyle badgeFixoStyle = createBadgeStyle(sheet.getWorkbook(), IndexedColors.RED);
+            CellStyle badgeVariavelStyle = createBadgeStyle(sheet.getWorkbook(), IndexedColors.BLUE);
+            int rowNum = 10;
             
             for (CustoSimplesResponse custo : custos) {
                 Row row = sheet.createRow(rowNum++);
@@ -252,11 +281,15 @@ public class ExportService {
                 valorCell.setCellValue(custo.getValor().doubleValue());
                 valorCell.setCellStyle(currencyStyle);
                 
-                // Tipo de Custo
+                // Tipo de Custo (com badge style como no front)
                 String tipoCusto = "FIXO".equalsIgnoreCase(custo.getTipoCusto()) ? "Fixo" : "Variável";
                 Cell tipoCell = row.createCell(2);
                 tipoCell.setCellValue(tipoCusto);
-                tipoCell.setCellStyle(dataStyle);
+                if ("FIXO".equalsIgnoreCase(custo.getTipoCusto())) {
+                    tipoCell.setCellStyle(badgeFixoStyle);
+                } else {
+                    tipoCell.setCellStyle(badgeVariavelStyle);
+                }
                 
                 // Percentual
                 double percentual = totalGeral > 0 ? (custo.getValor().doubleValue() / totalGeral) * 100 : 0;
@@ -503,5 +536,100 @@ public class ExportService {
                 sheet.setColumnWidth(i, sheet.getColumnWidth(i) + 1000);
             }
         }
+    }
+
+    private CellStyle createCardStyle(Workbook workbook, IndexedColors color) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 14);
+        font.setColor(IndexedColors.WHITE.getIndex());
+        style.setFont(font);
+        style.setFillForegroundColor(color.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setTopBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        style.setBottomBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        style.setLeftBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        style.setRightBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        return style;
+    }
+
+    private CellStyle createCurrencyCardStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 18);
+        font.setColor(IndexedColors.WHITE.getIndex());
+        style.setFont(font);
+        style.setDataFormat((short) 8); // Formato de moeda padrão
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setTopBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        style.setBottomBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        style.setLeftBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        style.setRightBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        return style;
+    }
+
+    private CellStyle createPercentCardStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setFontHeightInPoints((short) 11);
+        font.setColor(IndexedColors.WHITE.getIndex());
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setTopBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        style.setBottomBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        style.setLeftBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        style.setRightBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        return style;
+    }
+
+    private CellStyle createInfoStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setFontHeightInPoints((short) 10);
+        font.setColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.LEFT);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        return style;
+    }
+
+    private CellStyle createBadgeStyle(Workbook workbook, IndexedColors color) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 10);
+        font.setColor(color.getIndex());
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setTopBorderColor(color.getIndex());
+        style.setBottomBorderColor(color.getIndex());
+        style.setLeftBorderColor(color.getIndex());
+        style.setRightBorderColor(color.getIndex());
+        style.setFillForegroundColor(IndexedColors.WHITE.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        return style;
     }
 }

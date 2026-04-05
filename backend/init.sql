@@ -7,8 +7,17 @@ CREATE TABLE IF NOT EXISTS users(
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
     deleted BOOLEAN DEFAULT FALSE,
-    deleted_at TIMESTAMP
+    deleted_at TIMESTAMP,
+    first_login BOOLEAN DEFAULT TRUE,
+    last_access_request TIMESTAMP
 );
+
+-- Migration para bancos existentes - adicionar novas colunas se não existirem
+ALTER TABLE users ADD COLUMN IF NOT EXISTS first_login BOOLEAN DEFAULT TRUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_access_request TIMESTAMP;
+
+-- Atualizar usuários existentes para first_login = FALSE (já têm senha definida)
+UPDATE users SET first_login = FALSE WHERE first_login IS NULL OR first_login = TRUE;
 
 CREATE TABLE IF NOT EXISTS boleto_data(
     id VARCHAR(36) PRIMARY KEY,

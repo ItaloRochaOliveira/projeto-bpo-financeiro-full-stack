@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Solicitação de Acesso</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #4f46e5;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4f46e5;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background-color: #f8fafc;
+            border-left: 4px solid #4f46e5;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .info-item {
+            margin: 10px 0;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #4f46e5;
+        }
+        .button {
+            display: inline-block;
+            background-color: #4f46e5;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #4338ca;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .alert {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📊 Sistema Financeiro</div>
+            <h2>Nova Solicitação de Acesso</h2>
+        </div>
+
+        <div class="content">
+            <p>Olá Administrador,</p>
+            <p>Uma nova solicitação de acesso foi registrada no Sistema Financeiro. Abaixo estão os detalhes:</p>
+
+            <div class="info-box">
+                <div class="info-item">
+                    <span class="info-label">Nome do Solicitante:</span> [[${userName}]]
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email:</span> [[${userEmail}]]
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Data da Solicitação:</span> [[${requestDate}]]
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Motivo do Acesso:</span>
+                    <div style="margin-top: 5px; padding: 10px; background-color: #f9fafb; border-radius: 5px;">
+                        [[${loginInfo}]]
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert">
+                <strong>⚠️ Ação Necessária:</strong> Por favor, analise esta solicitação e tome as ações necessárias para aprovar ou rejeitar o acesso.
+            </div>
+
+            <p>Para gerenciar as solicitações de acesso, acesse o painel administrativo:</p>
+            <a href="[[${frontendUrl}]]/admin" class="button">Acessar Painel Administrativo</a>
+        </div>
+
+        <div class="footer">
+            <p>Este email foi enviado automaticamente pelo Sistema Financeiro</p>
+            <p>Data: [[${requestDate}]]</p>
+            <p>Se você não é um administrador, por favor ignore este email.</p>
+        </div>
+    </div>
+</body>
+</html>

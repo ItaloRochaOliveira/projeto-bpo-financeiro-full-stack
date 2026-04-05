@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Email</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #8b5cf6;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #8b5cf6;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .test-box {
+            background-color: #f3f4f6;
+            border-left: 4px solid #8b5cf6;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .test-icon {
+            font-size: 48px;
+            color: #8b5cf6;
+            margin-bottom: 15px;
+        }
+        .info-item {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f9fafb;
+            border-radius: 5px;
+            border: 1px solid #e5e7eb;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #4b5563;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 12px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📊 Sistema Financeiro</div>
+            <h2>🧪 Teste de Email</h2>
+        </div>
+
+        <div class="content">
+            <p>Olá!</p>
+            
+            <div class="test-box">
+                <div class="test-icon">📧</div>
+                <h3>Teste de Configuração de Email</h3>
+                <p>Este é um email de teste para verificar se o serviço de email está funcionando corretamente.</p>
+            </div>
+
+            <p>Se você está recebendo este email, significa que:</p>
+            
+            <div class="info-item">
+                <span class="info-label">✅ Servidor de email está configurado corretamente</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">✅ Templates Thymeleaf estão funcionando</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">✅ Integração com Spring Boot está ativa</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">📅 Data do teste: [[${testDate}]]</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">🌐 URL do sistema: [[${frontendUrl}]]</span>
+            </div>
+
+            <p style="text-align: center; margin-top: 30px;">
+                <strong>O sistema está pronto para enviar emails de notificação!</strong>
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>Este email foi enviado automaticamente pelo Sistema Financeiro</p>
+            <p>Data: [[${testDate}]]</p>
+            <p>Se você não esperava este email, pode ignorá-lo com segurança.</p>
+        </div>
+    </div>
+</body>
+</html>

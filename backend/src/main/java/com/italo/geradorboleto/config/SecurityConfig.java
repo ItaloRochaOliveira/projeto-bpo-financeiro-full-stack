@@ -51,7 +51,8 @@ public class SecurityConfig {
             .and()
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/auth/login").permitAll()
-                // .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/auth/request-access").permitAll()
+                .requestMatchers("/auth/first-password").permitAll()
                 .requestMatchers("/api/health").permitAll()
                 .requestMatchers("/api/boleto/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

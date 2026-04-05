@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso Aprovado</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #10b981;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #10b981;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .success-box {
+            background-color: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 48px;
+            color: #10b981;
+            margin-bottom: 15px;
+        }
+        .credentials-box {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .credential-item {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #fcd34d;
+        }
+        .credential-label {
+            font-weight: bold;
+            color: #92400e;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .credential-value {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #333;
+            background-color: #fef9c3;
+            padding: 8px;
+            border-radius: 3px;
+            word-break: break-all;
+        }
+        .button {
+            display: inline-block;
+            background-color: #10b981;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #059669;
+        }
+        .warning {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .steps {
+            margin: 20px 0;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .step-number {
+            background-color: #3b82f6;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 12px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📊 Sistema Financeiro</div>
+            <h2>🎉 Acesso Aprovado!</h2>
+        </div>
+
+        <div class="content">
+            <p>Olá, <strong>[[${userName}]]</strong>!</p>
+            
+            <div class="success-box">
+                <div class="success-icon">✅</div>
+                <h3>Seu acesso foi aprovado!</h3>
+                <p>Bem-vindo ao Sistema Financeiro! Estamos felizes em tê-lo conosco.</p>
+            </div>
+
+            <p>Sua solicitação de acesso foi analisada e aprovada pela nossa equipe administrativa. 
+            Abaixo estão suas credenciais de acesso temporárias:</p>
+
+            <div class="credentials-box">
+                <h4>🔐 Suas Credenciais de Acesso:</h4>
+                <div class="credential-item">
+                    <span class="credential-label">Email:</span>
+                    <span class="credential-value">[[${userEmail}]]</span>
+                </div>
+                <div class="credential-item">
+                    <span class="credential-label">Senha Temporária:</span>
+                    <span class="credential-value">[[${tempPassword}]]</span>
+                </div>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ Importante:</strong> Esta é uma senha temporária. 
+                Você precisará definir sua própria senha no primeiro acesso.
+            </div>
+
+            <div class="steps">
+                <h4>🚀 Próximos Passos:</h4>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <strong>Acesse o sistema:</strong> Use suas credenciais para fazer login
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div>
+                        <strong>Defina sua senha:</strong> Você será redirecionado para criar sua senha pessoal
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div>
+                        <strong>Comece a usar:</strong> Explore todas as funcionalidades do sistema
+                    </div>
+                </div>
+            </div>
+
+            <p style="text-align: center;">
+                <strong>Clique no botão abaixo para acessar o sistema agora:</strong>
+            </p>
+            <div style="text-align: center;">
+                <a href="[[${loginUrl}]]" class="button">Acessar Sistema Financeiro</a>
+            </div>
+
+            <div class="info-box" style="background-color: #f8fafc; border-left: 4px solid #3b82f6;">
+                <strong>💡 Dica:</strong> Guarde suas credenciais em um local seguro. 
+                Se tiver algum problema, entre em contato com nosso suporte.
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Este email foi enviado automaticamente pelo Sistema Financeiro</p>
+            <p>Se você não solicitou este acesso, por favor entre em contato conosco imediatamente.</p>
+        </div>
+    </div>
+</body>
+</html>

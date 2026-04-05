@@ -137,6 +137,9 @@ export function useDashboardCharts() {
         if (custosResponse && custosResponse.data) {
           const custosData = Array.isArray(custosResponse.data.data) ? custosResponse.data.data : []
           
+          console.log('=== DEBUG DISTRIBUIÇÃO CUSTOS ===')
+          console.log('Custos Data:', custosData)
+          
           // Agrupar custos por tipo
           const custosPorTipo = custosData.reduce((acc: any, custo: any) => {
             const tipo = custo.tipoCusto || 'Outros'
@@ -147,24 +150,22 @@ export function useDashboardCharts() {
             return acc
           }, {})
 
+          console.log('Custos por Tipo:', custosPorTipo)
+
           const totalCustos = Object.values(custosPorTipo).reduce((sum: number, valor: any) => sum + valor, 0)
+          console.log('Total Custos:', totalCustos)
 
-          distribuicaoCustos = Object.entries(custosPorTipo).map(([categoria, valor]) => ({
-            categoria,
-            valor: valor as number,
-            percentual: totalCustos > 0 ? ((valor as number) / totalCustos) * 100 : 0
-          }))
-        }
-
-        // Se não houver dados reais, usar dados simulados
-        if (distribuicaoCustos.length === 0) {
-          distribuicaoCustos = [
-            { categoria: 'Aluguel', valor: 25000, percentual: 35.7 },
-            { categoria: 'Salários', valor: 20000, percentual: 28.6 },
-            { categoria: 'Material', valor: 15000, percentual: 21.4 },
-            { categoria: 'Serviços', valor: 7000, percentual: 10.0 },
-            { categoria: 'Outros', valor: 3000, percentual: 4.3 }
-          ]
+          distribuicaoCustos = Object.entries(custosPorTipo).map(([categoria, valor]) => {
+            const percentual = totalCustos > 0 ? ((valor as number) / totalCustos) * 100 : 0
+            console.log(`Categoria: ${categoria}, Valor: ${valor}, Percentual: ${percentual}%`)
+            return {
+              categoria,
+              valor: valor as number,
+              percentual: percentual
+            }
+          })
+          
+          console.log('Distribuição Final:', distribuicaoCustos)
         }
 
         setChartData({

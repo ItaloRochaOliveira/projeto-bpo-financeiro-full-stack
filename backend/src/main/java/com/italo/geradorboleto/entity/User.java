@@ -51,6 +51,12 @@ public class User {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "first_login", nullable = false)
+    private Boolean firstLogin = true;
+
+    @Column(name = "last_access_request")
+    private LocalDateTime lastAccessRequest;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Boleto> boletos;
 
@@ -140,6 +146,22 @@ public class User {
 
     public void setDeletedAt(LocalDateTime deletedAt) {
         this.deletedAt = deletedAt;
+    }
+
+    public Boolean getFirstLogin() {
+        return firstLogin;
+    }
+
+    public void setFirstLogin(Boolean firstLogin) {
+        this.firstLogin = firstLogin;
+    }
+
+    public LocalDateTime getLastAccessRequest() {
+        return lastAccessRequest;
+    }
+
+    public void setLastAccessRequest(LocalDateTime lastAccessRequest) {
+        this.lastAccessRequest = lastAccessRequest;
     }
 
  public List<Boleto> getBoletos() {

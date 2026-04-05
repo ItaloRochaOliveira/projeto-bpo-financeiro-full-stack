@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitação de Acesso Recebida</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #19183E;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0fdfa;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px rgba(4, 58, 73, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #059669;
+            padding-bottom: 24px;
+            margin-bottom: 32px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #043a49;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #059669, #047857);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .content {
+            margin-bottom: 32px;
+        }
+        .success-box {
+            background: linear-gradient(135deg, #f0fdfa, #dcfce7);
+            border-left: 4px solid #059669;
+            padding: 24px;
+            margin: 24px 0;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #bbf7d0;
+        }
+        .success-icon {
+            font-size: 48px;
+            color: #059669;
+            margin-bottom: 16px;
+        }
+        .steps {
+            margin: 32px 0;
+        }
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+            gap: 16px;
+        }
+        .step-number {
+            background: linear-gradient(135deg, #043a49, #064e59);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-title {
+            font-weight: 600;
+            color: #043a49;
+            margin-bottom: 4px;
+        }
+        .step-text {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-left: 4px solid #0ea5e9;
+            padding: 20px;
+            margin: 24px 0;
+            border-radius: 12px;
+            border: 1px solid #bae6fd;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #fef3c7, #fed7aa);
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 24px 0;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .badge {
+            display: inline-block;
+            background-color: #059669;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">📊</div>
+                <span>Sistema Financeiro</span>
+            </div>
+            <h2 style="color: #043a49; margin: 16px 0 0 0;">Solicitação de Acesso Recebida</h2>
+        </div>
+
+        <div class="content">
+            <p style="color: #64748b;">Olá, <strong style="color: #043a49;">[[${userName}]]</strong>!</p>
+            
+            <div class="success-box">
+                <div class="success-icon">✅</div>
+                <h3 style="color: #043a49; margin: 0 0 12px 0;">Sua solicitação foi recebida!</h3>
+                <p style="color: #64748b; margin: 0;">
+                    Agradecemos seu interesse em utilizar o Sistema Financeiro.
+                </p>
+            </div>
+
+            <p style="color: #64748b; margin-bottom: 24px;">
+                Recebemos sua solicitação em <strong>[[${requestDate}]]</strong> e nossa equipe irá analisá-la o mais breve possível.
+            </p>
+
+            <div class="steps">
+                <h3 style="color: #043a49; margin: 0 0 20px 0;">O que acontece agora?</h3>
+                
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <div class="step-title">Análise</div>
+                        <div class="step-text">Nossa equipe administrativa irá revisar sua solicitação</div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <div class="step-title">Aprovação</div>
+                        <div class="step-text">Você receberá um email com a aprovação e instruções de acesso</div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <div class="step-title">Primeiro Acesso</div>
+                        <div class="step-text">Você poderá definir sua senha e começar a usar o sistema</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h4 style="color: #043a49; margin: 0 0 8px 0;">📧 Importante</h4>
+                <p style="color: #64748b; margin: 0;">
+                    Você receberá um email de notificação quando sua solicitação for aprovada. 
+                    Por favor, verifique sua caixa de entrada (e a pasta de spam) regularmente.
+                </p>
+            </div>
+
+            <div class="highlight-box">
+                <h4 style="margin: 0 0 8px 0;">⏰ Limite Diário</h4>
+                <p style="margin: 0;">
+                    Lembre-se que você pode solicitar acesso apenas uma vez por dia. 
+                    Caso precise de ajuda, entre em contato conosco.
+                </p>
+            </div>
+
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="[[${frontendUrl}]]" style="color: #043a49; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+                    <span>Visitar Sistema Financeiro</span>
+                    <span style="color: #059669;">→</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p style="margin: 0 0 8px 0;">Este email foi enviado automaticamente pelo Sistema Financeiro</p>
+            <p style="margin: 0;">Data: [[${requestDate}]]</p>
+            <p style="margin: 0; color: #94a3b8;">Se você não solicitou este acesso, por favor ignore este email.</p>
+        </div>
+    </div>
+</body>
+</html>

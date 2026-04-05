@@ -2,6 +2,12 @@
 
 Uma aplicação web completa para gestão financeira empresarial, desenvolvida com **Next.js 14+**, **TypeScript**, **Tailwind CSS** e **Spring Boot Java**.
 
+## 📋 Gestão do Projeto
+
+A gestão completa deste projeto foi realizada através do **Notion**, incluindo planejamento, backlog, tarefas e documentação:
+
+🔗 **[Acessar Gestão do Projeto no Notion](https://www.notion.so/Projeto-integrador-III-B-311f52f25b4480249b4deffbba8f9ca3)**
+
 ## ✨ Funcionalidades
 
 ### 🔐 Autenticação

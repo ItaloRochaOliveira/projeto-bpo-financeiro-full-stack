@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Solicitação de Usuário</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #19183E;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0fdfa;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px rgba(4, 58, 73, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #043a49;
+            padding-bottom: 24px;
+            margin-bottom: 32px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #043a49;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #043a49, #064e59);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .content {
+            margin-bottom: 32px;
+        }
+        .alert-box {
+            background: linear-gradient(135deg, #f0fdfa, #dcfce7);
+            border-left: 4px solid #059669;
+            padding: 20px;
+            margin: 24px 0;
+            border-radius: 12px;
+            border: 1px solid #bbf7d0;
+        }
+        .alert-icon {
+            font-size: 24px;
+            color: #059669;
+            margin-bottom: 12px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #043a49;
+            font-size: 14px;
+            min-width: 120px;
+        }
+        .info-value {
+            color: #64748b;
+            font-size: 14px;
+            background-color: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .reason-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 16px;
+            border-radius: 12px;
+            margin: 16px 0;
+        }
+        .reason-text {
+            color: #043a49;
+            font-style: italic;
+            line-height: 1.5;
+        }
+        .action-section {
+            background: linear-gradient(135deg, #043a49, #064e59);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin: 24px 0;
+            text-align: center;
+        }
+        .action-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .action-text {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #059669;
+            color: white;
+            padding: 12px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid #059669;
+        }
+        .button:hover {
+            background-color: #047857;
+            border-color: #047857;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        }
+        .footer {
+            text-align: center;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .badge {
+            display: inline-block;
+            background-color: #064e59;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .priority-high {
+            background-color: #dc2626;
+        }
+        .priority-medium {
+            background-color: #d97706;
+        }
+        .priority-low {
+            background-color: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">📊</div>
+                <span>Sistema Financeiro</span>
+            </div>
+            <h2 style="color: #043a49; margin: 16px 0 0 0;">Nova Solicitação de Usuário</h2>
+        </div>
+
+        <div class="content">
+            <p style="color: #64748b; margin-bottom: 24px;">
+                Uma nova solicitação de acesso foi registrada no Sistema Financeiro. Por favor, analise os dados abaixo:
+            </p>
+
+            <div class="alert-box">
+                <div class="alert-icon">👤</div>
+                <h3 style="color: #043a49; margin: 0 0 8px 0;">Dados do Solicitante</h3>
+                <div class="info-grid">
+                    <div class="info-label">Nome:</div>
+                    <div class="info-value" th:text="${userName}">Nome do Usuário</div>
+                    
+                    <div class="info-label">Email:</div>
+                    <div class="info-value" th:text="${userEmail}">email@exemplo.com</div>
+                    
+                    <div class="info-label">Data/Hora:</div>
+                    <div class="info-value" th:text="${requestDate}">Data/Hora</div>
+                </div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #f0fdfa, #dcfce7); border: 1px solid #059669; padding: 20px; border-radius: 12px; margin: 24px 0;">
+                <h3 style="color: #043a49; margin: 0 0 12px 0;">🔐 Credenciais de Acesso Temporárias</h3>
+                <p style="color: #64748b; margin: 0 0 16px 0; font-size: 14px;">
+                    O usuário foi criado com as seguintes credenciais temporárias. 
+                    Você pode repassar diretamente ao usuário para que ele acesse o sistema:
+                </p>
+                <div style="background-color: #ffffff; border: 2px solid #059669; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                    <div style="display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center;">
+                        <div style="font-weight: 600; color: #043a49; font-size: 14px;">Login:</div>
+                        <div style="color: #64748b; font-size: 14px; font-family: monospace; background-color: #f8fafc; padding: 4px 8px; border-radius: 4px;" th:text="${userEmail}">usuario@exemplo.com</div>
+                        
+                        <div style="font-weight: 600; color: #043a49; font-size: 14px;">Senha:</div>
+                        <div style="color: #059669; font-size: 16px; font-weight: bold; font-family: monospace; background-color: #f0fdfa; padding: 6px 12px; border-radius: 4px; border: 1px solid #059669;" th:text="${tempPassword}">SENHA_TEMP</div>
+                    </div>
+                </div>
+                <div style="background-color: #fef3c7; border: 1px solid #f59e0b; color: #92400e; padding: 12px; border-radius: 8px; margin-top: 16px;">
+                    <p style="margin: 0; font-size: 13px;">
+                        <strong>⚠️ Importante:</strong> Esta é uma senha temporária. 
+                        O usuário deverá alterá-la no primeiro acesso através do link: <br>
+                        <a th:href="${frontendUrl} + '/first-login'" style="color: #059669; text-decoration: none; font-weight: 600;" th:text="${frontendUrl} + '/first-login'">http://localhost:3000/first-login</a>
+                    </p>
+                </div>
+            </div>
+
+            <div style="margin: 24px 0;">
+                <h3 style="color: #043a49; margin: 0 0 12px 0;">Motivo da Solicitação</h3>
+                <div class="reason-box">
+                    <p class="reason-text" th:text="${loginInfo}">Motivo da solicitação</p>
+                </div>
+            </div>
+
+            <div class="action-section">
+                <div class="action-title">🔐 Ação Necessária</div>
+                <div class="action-text">
+                    Esta solicitação requer sua aprovação para que o usuário possa acessar o sistema.
+                </div>
+                <a th:href="${frontendUrl} + '/admin'" class="button">
+                    Gerenciar Solicitações
+                </a>
+            </div>
+
+            <div style="background-color: #fef3c7; border: 1px solid #f59e0b; padding: 16px; border-radius: 12px; margin: 24px 0;">
+                <p style="color: #92400e; margin: 0; font-size: 14px;">
+                    <strong>⚠️ Importante:</strong> Verifique se este usuário deve ter acesso ao sistema antes de aprovar.
+                    Cada solicitação gera um usuário com senha temporária que precisa ser configurada no primeiro acesso.
+                </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p style="margin: 0 0 8px 0;">Este email foi enviado automaticamente pelo Sistema Financeiro</p>
+            <p style="margin: 0;">Data: [[${requestDate}]]</p>
+            <p style="margin: 0; color: #94a3b8;">Se você não é um administrador, por favor ignore este email.</p>
+        </div>
+    </div>
+</body>
+</html>

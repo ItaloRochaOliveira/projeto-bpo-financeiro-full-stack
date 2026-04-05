@@ -15,4 +15,9 @@ public class FaturamentoResponse {
     private BigDecimal porcentagem;
     private String precoId;
     private String precoEquipamento;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private Boolean deleted;
+    private LocalDateTime deletedAt;
+    private String userId;
 }

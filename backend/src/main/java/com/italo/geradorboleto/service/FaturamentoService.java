@@ -107,6 +107,13 @@ public class FaturamentoService {
             response.setPrecoEquipamento(faturamento.getPreco().getEquipamento());
         }
         
+        // Adicionar campos de data e status
+        response.setCreatedAt(faturamento.getCreatedAt());
+        response.setUpdatedAt(faturamento.getUpdatedAt());
+        response.setDeleted(faturamento.getDeleted());
+        response.setDeletedAt(faturamento.getDeletedAt());
+        response.setUserId(faturamento.getUserId());
+        
         return response;
     }
 }

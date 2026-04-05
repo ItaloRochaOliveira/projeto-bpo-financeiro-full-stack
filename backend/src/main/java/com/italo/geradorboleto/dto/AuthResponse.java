@@ -6,6 +6,7 @@ public class AuthResponse {
     private String email;
     private String name;
     private String role;
+    private Boolean firstLogin;
 
     public AuthResponse() {}
 
@@ -15,6 +16,16 @@ public class AuthResponse {
         this.email = email;
         this.name = name;
         this.role = role;
+        this.firstLogin = false;
+    }
+
+    public AuthResponse(String token, String userId, String email, String name, String role, Boolean firstLogin) {
+        this.token = token;
+        this.userId = userId;
+        this.email = email;
+        this.name = name;
+        this.role = role;
+        this.firstLogin = firstLogin;
     }
 
     public String getToken() {
@@ -55,5 +66,13 @@ public class AuthResponse {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public Boolean getFirstLogin() {
+        return firstLogin;
+    }
+
+    public void setFirstLogin(Boolean firstLogin) {
+        this.firstLogin = firstLogin;
     }
 }

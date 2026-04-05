@@ -24,6 +24,39 @@ services:
       - SYS_NICE
     volumes:
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backend/migrations:/migrations
+
+  migration:
+    image: postgres:15
+    container_name: migration-runner
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - minha-rede-bpo-financeiro
+    volumes:
+      - ./backend/migrations:/migrations
+    command: >
+      sh -c "
+        echo ' Waiting for database to be ready...' &&
+        until pg_isready -h db -p 5432 -U ${POSTGRES_USER} -d ${POSTGRES_DB}; do
+          echo 'Database not ready, waiting 5 seconds...'
+          sleep 5
+        done &&
+        echo 'Database is ready, executing migrations...' &&
+        for migration_file in /migrations/*.sql; do
+          echo 'Executing migration: $$(basename $$migration_file)' &&
+          psql -h db -p 5432 -U ${POSTGRES_USER} -d ${POSTGRES_DB} -f $$migration_file &&
+          echo 'Migration $$(basename $$migration_file) completed successfully' ||
+          { echo 'Migration $$(basename $$migration_file) failed'; exit 1; }
+        done &&
+        echo 'All migrations executed successfully!'
+      "
+    restart: "no"
 
   api:
     image: bpo-financeiro-api:1.0.0

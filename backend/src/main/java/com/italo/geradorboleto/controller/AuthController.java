@@ -3,6 +3,8 @@ package com.italo.geradorboleto.controller;
 import com.italo.geradorboleto.dto.AuthResponse;
 import com.italo.geradorboleto.dto.LoginRequest;
 import com.italo.geradorboleto.dto.SignupRequest;
+import com.italo.geradorboleto.dto.AccessRequest;
+import com.italo.geradorboleto.dto.FirstPasswordRequest;
 import com.italo.geradorboleto.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,27 @@ public class AuthController {
         try {
             AuthResponse response = authService.signup(signupRequest);
             return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/request-access")
+    public ResponseEntity<?> requestAccess(@Valid @RequestBody AccessRequest accessRequest) {
+        try {
+            authService.requestAccess(accessRequest);
+            return ResponseEntity.ok("Solicitação de acesso enviada com sucesso! Aguarde aprovação.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/first-password")
+    public ResponseEntity<?> setFirstPassword(@Valid @RequestBody FirstPasswordRequest firstPasswordRequest, 
+                                            @RequestHeader("Authorization") String token) {
+        try {
+            authService.setFirstPassword(firstPasswordRequest, token);
+            return ResponseEntity.ok("Senha definida com sucesso!");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
